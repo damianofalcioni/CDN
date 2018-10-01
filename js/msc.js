@@ -156,7 +156,7 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
       }
     },
     view: {
-      showMSResult = function (output, adaptationAlg, originalResultTxt, adaptedResultDiv, messagesDiv) {
+      showMSResult: function (output, adaptationAlg, originalResultTxt, adaptedResultDiv, messagesDiv) {
           if (originalResultTxt && originalResultTxt.val)
             originalResultTxt.val(JSON.stringify(output, null, 4));
           if (adaptationAlg.indexOf('return') === -1) {
