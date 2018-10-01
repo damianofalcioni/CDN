@@ -179,6 +179,8 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
             autoScrollEditorIntoView: true,
             minLines: 5
           });
+          if(_status.aceEditorValue)
+            _status.aceEditor.setValue(_status.aceEditorValue);
       },
       initMsInputsDom: function (_dom, _status, mscEndpoint, microserviceId, operationId) {
         _statics.services.getMicroserviceIOInfo(mscEndpoint, microserviceId, operationId, function (msIOInfo) {
@@ -270,7 +272,10 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
         Object.keys(_dom.inputTxts).forEach(function (inputId) {
           _dom.inputTxts[inputId].val(content.inputs && content.inputs[inputId] && content.inputs[inputId].value?content.inputs[inputId].value:'');
         });
-        _status.aceEditor.setValue(content.alg || '');
+        if(_status.aceEditor)
+          _status.aceEditor.setValue(content.alg || '');
+        else
+          _status.aceEditorValue = content.alg || '';
       }
     }
   };
