@@ -309,13 +309,13 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
         _dom.callInputJsonPre.html(JSON.stringify(_status.requiredInputs, null, 4));
         if (forceStartWhenStopped) {
           _statics.services.callMicroserviceForced(mscEndpoint, microserviceId, operationId, _status.requiredInputs, function (output) {
-            _statics.view.showMSResult(output, aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
+            _statics.view.showMSResult(output, _status.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
           }, function (error) {
             Utils.showError(error, _dom.rootNode);
           });
         } else {
           _statics.services.callMicroservice(mscEndpoint, microserviceId, operationId, _status.requiredInputs, function (output) {
-            _statics.view.showMSResult(output, aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
+            _statics.view.showMSResult(output, _status.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
           }, function (error) {
             Utils.showError(error, _dom.rootNode);
           });
