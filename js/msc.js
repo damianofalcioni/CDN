@@ -170,7 +170,7 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
           } catch (e) {
             Utils.showError(e, messagesDiv);
           }
-        };
+        }
     },
     init: {
       initACEEditor: function (_dom, _status) {
@@ -340,7 +340,7 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
 
 
 //------------------------------------------------------------------------
-var newInputTableModule = (function (newMicroserviceCallConfigUI) {
+var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
 
   var _newTableRowModule = function (menuName = '', microserviceId = '', operationId = '', microserviceInputJSON = '{}', microserviceOutputAdaptAlg = '', removeBtnHandlerFn = function () {}, editBtnHandlerFn = function () {}) {
     var _dom = {
@@ -497,7 +497,7 @@ var newInputTableModule = (function (newMicroserviceCallConfigUI) {
       }
     };
   };
-}(newMicroserviceCallConfigUI));
+}(olive.newMicroserviceCallConfigUI, olive.utils));
 
 /*TEST-START*/
 
@@ -586,8 +586,7 @@ var _newMSInputsTableModule = (function () {
       addRow: _fns.addRow
     };
   };
-}
-  ());
+}());
 
 var _newMSInputsModule = (function (Utils, _newMSInputsTableModule) {
   return function () {
@@ -620,7 +619,7 @@ var _newMSInputsModule = (function (Utils, _newMSInputsTableModule) {
     };
   };
 }
-  (Utils, _newMSInputsTableModule));
+  (olive.utils, _newMSInputsTableModule));
 
 var _newConnectorConfiguration = (function (Utils) {
   var services = {
@@ -728,7 +727,7 @@ var _newConnectorConfiguration = (function (Utils) {
     };
   };
 }
-  (Utils));
+  (olive.utils));
 
 var _newMSAsyncInputsTableModule = (function () {
 
@@ -875,7 +874,7 @@ var _MSAsyncInputsModule = (function (Utils, _newMSAsyncInputsTableModule) {
   return MSAsyncInputsModule;
 
 }
-  (Utils, _newMSAsyncInputsTableModule));
+  (olive.utils, _newMSAsyncInputsTableModule));
 
 var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule) {
 
@@ -1086,7 +1085,7 @@ var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMS
     };
   };
 }
-  (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule));
+  (olive.utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule));
 
 var _newMSDetailsModule = (function (Utils) {
   return function () {
@@ -1152,7 +1151,7 @@ var _newMSDetailsModule = (function (Utils) {
     _doms.descriptionHtmlDiv.summernote();
   }
 }
-  (Utils));
+  (olive.utils));
 
 var newMSModule = (function (Utils, _newMSDetailsModule, _newMSOperationModule) {
   return function (config = {}) {
@@ -1296,7 +1295,7 @@ var newMSModule = (function (Utils, _newMSDetailsModule, _newMSOperationModule) 
   }
 
 }
-  (Utils, _newMSDetailsModule, _newMSOperationModule));
+  (olive.utils, _newMSDetailsModule, _newMSOperationModule));
 
 /*TEST-END*/
 
@@ -1504,7 +1503,7 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
     };
   };
 }
-  (Utils, newInputTableModule, newMSModule));
+  (olive.utils, newInputTableModule, newMSModule));
 
 var MSC2 = (function (Utils, newMSModule) {
 
