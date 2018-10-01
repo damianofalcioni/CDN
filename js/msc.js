@@ -192,7 +192,7 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
             _dom.inputTxts[inputId] = $('<textarea style="resize:vertical;" rows="1" class="form-control" placeholder="' + inputInfos.workingExample + '">' + inputInfos.workingExample + '</textarea>');
             _dom.resultDescriptionSpan.text(msIOInfo.outputDescription);
             _dom.callEndpointSpan.text(mscEndpoint + '?microserviceId=' + microserviceId + '&operationId=' + operationId);
-            _dom.callInputJsonPre.html(JSON.stringify(requiredInputs, null, 4));
+            _dom.callInputJsonPre.html(JSON.stringify(_status.requiredInputs, null, 4));
 
             _dom.tableTbody.append(
               $('<tr>').append(
