@@ -179,8 +179,6 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
             autoScrollEditorIntoView: true,
             minLines: 5
           });
-          if(_status.aceEditorValue)
-            _status.aceEditor.setValue(_status.aceEditorValue);
       },
       initMsInputsDom: function (_dom, _status, mscEndpoint, microserviceId, operationId) {
         _statics.services.getMicroserviceIOInfo(mscEndpoint, microserviceId, operationId, function (msIOInfo) {
@@ -275,7 +273,7 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
         if(_status.aceEditor)
           _status.aceEditor.setValue(content.microserviceOutputAdaptAlg || '');
         else
-          _status.aceEditorValue = content.microserviceOutputAdaptAlg || '';
+          throw 'aceEditor not initialized';
       }
     }
   };
@@ -413,11 +411,6 @@ var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
           operationId: rowContent.operationId,
           forceStartWhenStopped: true
         });
-        microserviceCallConfigUI.setContent({
-          menuName: rowContent.menuName,
-          microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
-          microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
-        });
         
         Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Edit microservice details', function () {
           return true;
@@ -432,6 +425,12 @@ var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
           });
         }, function () {
           microserviceCallConfigUI.afterRender();
+          
+          microserviceCallConfigUI.setContent({
+            menuName: rowContent.menuName,
+            microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
+            microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
+          });
         });
       },
       addRow: function (menuName, microserviceId, operationId, microserviceInputJSON, microserviceOutputAdaptAlg) {
