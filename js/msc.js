@@ -477,8 +477,6 @@ var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
       },
 
       addRowDialog: function (microserviceId, operationId) {
-        var addMicroserviceModule = newMicroserviceCallConfigUI(, null, null, null);
-
         var microserviceCallConfigUI = newMicroserviceCallConfigUI({
           mscEndpoint: mscEndpoint,
           microserviceId: microserviceId,
