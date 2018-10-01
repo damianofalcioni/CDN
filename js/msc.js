@@ -270,12 +270,12 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
       setContent: function (_dom, _status, content) {
         _dom.serviceNameTxt.val(content.menuName || '');
         Object.keys(_dom.inputTxts).forEach(function (inputId) {
-          _dom.inputTxts[inputId].val(content.inputs && content.inputs[inputId] && content.inputs[inputId].value?content.inputs[inputId].value:'');
+          _dom.inputTxts[inputId].val(content.microserviceInputs && content.microserviceInputs[inputId] && content.microserviceInputs[inputId].value?content.microserviceInputs[inputId].value:'');
         });
         if(_status.aceEditor)
-          _status.aceEditor.setValue(content.alg || '');
+          _status.aceEditor.setValue(content.microserviceOutputAdaptAlg || '');
         else
-          _status.aceEditorValue = content.alg || '';
+          _status.aceEditorValue = content.microserviceOutputAdaptAlg || '';
       }
     }
   };
