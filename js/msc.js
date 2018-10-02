@@ -732,8 +732,8 @@ var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMS
 
     var configurationContent = content.configuration || {};
     var connectorId = configurationContent.connectorId || '';
-    dom.connectorIdSelect.val(connectorId);//.trigger('change');
-    staticSetConnectorRelatedContent(connectorId, connectorId, connectors, configurationContent, dom, sub);
+    dom.connectorIdSelect.val(connectorId).trigger('change');
+    //staticSetConnectorRelatedContent(connectorId, connectorId, connectors, configurationContent, dom, sub);
   }
 
   function staticSetConnectorRelatedContent(actualConnectorId, selectedConnectorId, connectors = {}, content = {}, dom, sub) {
