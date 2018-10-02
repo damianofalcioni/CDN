@@ -352,7 +352,7 @@ olive.modules.newTable = (function () {
             var name = field.name || '';
             if(name==='') throw 'Table field name required';
             var type = field.type || 'input'; //or button
-            var text = field.text || name;
+            var text = field.text || '';
             var iconClass = field.iconClass || '';
             var style = field.style || '';
             var fn = field.fn || function () {};
