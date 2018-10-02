@@ -501,7 +501,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
       loadContent: function (_dom, msConfig, mscEndpoint) {
         _dom.outputDiv.addClass('loading');
 
-        Utils.callMicroserviceForced(mscEndpoint, msConfig.microserviceId, msConfig.operationId, msConfig.microserviceInputJSON, function (data) {
+        _statics.services.callMicroserviceForced(mscEndpoint, msConfig.microserviceId, msConfig.operationId, msConfig.microserviceInputJSON, function (data) {
           _dom.outputDiv.removeClass('loading');
 
           var alg = msConfig.microserviceOutputAdaptAlg;
