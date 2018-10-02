@@ -1737,4 +1737,4 @@ var newAdminModule = (function (Utils, newTable, newMicroserviceCallConfigUI, ne
       }
     };
   };
-}(olive.utils, olive.newTable, olive.newMicroserviceCallConfigUI, newMSModule));
+}(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceCallConfigUI, newMSModule));
