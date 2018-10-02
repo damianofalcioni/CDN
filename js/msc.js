@@ -143,6 +143,153 @@ olive.utils = (function () {
 }());
 
 //------------------------------------------------------------------------
+olive.modules.newTable = (function () {
+  
+  var _newRow = (function () {
+    var _statics = {
+      init: {
+        initDom: function (_dom, fieldList, rowThis) {
+          fieldList.forEach(function (field) {
+            var name = field.name || '';
+            if(name==='') throw 'Table field name required';
+            var type = field.type || 'input'; //or button
+            var text = field.text || '';
+            var iconClass = field.iconClass || '';
+            var style = field.style || '';
+            var fn = field.fn || function () {};
+            if(type==='input')
+              _dom[name] = $('<input type="text" class="form-control">');
+            else
+              _dom[name] = $('<div class="input-group-addon link" style="'+style+'">'+text+'</div>').click(function () {
+                fn(rowThis);
+              });
+            if(iconClass!='')
+              _dom[name].append('<span class="'+iconClass+'"></span>');
+          });
+        }
+      },
+      ui: {
+        render: function (_dom, fieldList) {
+          var root = $('<div class="input-group">');
+          fieldList.forEach(function (field) {
+            if(field.type!=='button')
+              root.append('<span class="input-group-addon">'+(field.text || field.name)+': </span>');
+            root.append(_dom[field.name]);
+          });
+          return root;
+        },
+        getContent: function (_dom, fieldList) {
+          var ret = {};
+          fieldList.forEach(function (field) {
+            if(field.type!=='button')
+              ret[field.name] = _dom[field.name].val();
+          });
+          return ret;
+        },
+        setContent: function (_dom, content) {
+          Object.keys(content).forEach(function (key) {
+            _dom[key].val(content[key]);
+          });
+        }
+      }
+    };
+    return function (config={}) {
+      var fieldList = config.fieldList || [];
+      var _dom = {};
+      
+      var rowThis = {
+        render: function () {
+          return _statics.ui.render(_dom, fieldList);
+        },
+        getContent: function () {
+          return _statics.ui.getContent(_dom, fieldList);
+        },
+        setContent: function (content={}) {
+          _statics.ui.setContent(_dom, content);
+        }
+      };
+      
+      _statics.init.initDom(_dom, fieldList, rowThis);
+      
+      return rowThis;
+    };
+  }());
+  
+  var _statics = {
+    ui: {
+      render: function (_dom) {
+        return $('<table class="table table-condensed table-hover">').append(
+          _dom.rootTbody);
+      },
+      getContent: function (_dom, _sub) {
+        return _sub.rowList.map(function (row) {
+          return row.getContent();
+        });
+      },
+      setContent: function (_dom, _sub, fieldList, rowContentList) {
+        _dom.rootTbody.empty();
+        _sub.rowList = [];
+        rowContentList.forEach(function (rowContent) {
+          _statics.ui.addRow(_dom, _sub, fieldList, rowContent);
+        });
+      },
+      addRow: function (_dom, _sub, fieldList, rowContent) {
+        var tr = $('<tr>');
+        var row = null;
+        var removeRowFn = function () {
+          tr.remove();
+          _sub.rowList.splice(_sub.rowList.indexOf(row), 1);
+        };
+        fieldList.push({
+          name: 'removeRow',
+          type: 'button',
+          text: '&times;',
+          iconClass: '',
+          style: 'font-size:20px;font-weight:700;',
+          fn: removeRowFn
+        });
+        row = _newRow({
+          fieldList: fieldList
+        });
+        row.setContent(rowContent);
+        _sub.rowList.push(row);
+        _dom.rootTbody.append(
+          tr.append(
+            $('<td>').append(
+              row.render())));
+      }
+      
+    }
+  };
+  
+  return function (config={}) {
+    var fieldList = config.fieldList || [];
+    
+    var _sub = {
+      rowList: []
+    };
+    var _dom = {
+      rootTbody: $('<tbody>')
+    };
+    
+    return {
+      render: function () {
+        return _statics.ui.render(_dom);
+      },
+      getContent: function () {
+        return _statics.ui.getContent(_dom, _sub);
+      },
+      setContent: function (contentList=[]) {
+        _statics.ui.setContent(_dom, _sub, fieldList, contentList);
+      },
+      addRow: function (content={}) {
+        _statics.ui.addRow(_dom, _sub, fieldList, content);
+      }
+    };
+  };
+}());
+
+//------------------------------------------------------------------------
 olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
 
   var _statics = {
@@ -342,663 +489,523 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
 }(olive.utils, ace));
 
 //------------------------------------------------------------------------
-olive.modules.newTable = (function () {
+olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
   
-  var _newRow = (function () {
-    var _statics = {
-      init: {
-        initDom: function (_dom, fieldList, rowThis) {
-          fieldList.forEach(function (field) {
-            var name = field.name || '';
-            if(name==='') throw 'Table field name required';
-            var type = field.type || 'input'; //or button
-            var text = field.text || '';
-            var iconClass = field.iconClass || '';
-            var style = field.style || '';
-            var fn = field.fn || function () {};
-            if(type==='input')
-              _dom[name] = $('<input type="text" class="form-control">');
-            else
-              _dom[name] = $('<div class="input-group-addon link" style="'+style+'">'+text+'</div>').click(function () {
-                fn(rowThis);
-              });
-            if(iconClass!='')
-              _dom[name].append('<span class="'+iconClass+'"></span>');
-          });
-        }
-      },
-      ui: {
-        render: function (_dom, fieldList) {
-          var root = $('<div class="input-group">');
-          fieldList.forEach(function (field) {
-            if(field.type!=='button')
-              root.append('<span class="input-group-addon">'+(field.text || field.name)+': </span>');
-            root.append(_dom[field.name]);
-          });
-          return root;
-        },
-        getContent: function (_dom, fieldList) {
-          var ret = {};
-          fieldList.forEach(function (field) {
-            if(field.type!=='button')
-              ret[field.name] = _dom[field.name].val();
-          });
-          return ret;
-        },
-        setContent: function (_dom, content) {
-          Object.keys(content).forEach(function (key) {
-            _dom[key].val(content[key]);
-          });
-        }
-      }
-    };
-    return function (config={}) {
-      var fieldList = config.fieldList || [];
-      var _dom = {};
-      
-      var rowThis = {
+  //------------------------------------------------------------------------
+  var _newMSInputsModule = (function (Utils, newTable) {
+    return function () {
+      var msInputsTableModule = newTable({
+        fieldList: [{
+          name: 'inputId',
+          text: 'Input ID'
+        }, {
+          name: 'matchingName',
+          text: 'Matching Name'
+        }, {
+          name: 'description',
+          text: 'Description'
+        }, {
+          name: 'workingExample',
+          text: 'Working Sample'
+        }]
+      });
+      var _doms = {
+        addMSInputBtn: $('<button class="btn btn-default" type="button">Add new call configuration Input</button>').click(function () {
+          msInputsTableModule.addRow();
+        })
+      };
+      return {
         render: function () {
-          return _statics.ui.render(_dom, fieldList);
+          return $('<div class="panel panel-default">').append(
+            '<div class="panel-heading"><h4 class="panel-title">Call Configuration Inputs</h4></div>').append(
+            $('<div class="panel-body">').append(
+              $('<div class="row form-group">').append(
+                $('<div class="col-lg-3">').append(
+                  _doms.addMSInputBtn))).append(
+              $('<div class="row form-group">').append(
+                $('<div class="col-lg-12">').append(
+                  msInputsTableModule.render()))));
         },
+
         getContent: function () {
-          return _statics.ui.getContent(_dom, fieldList);
+          return Utils.arr2obj(msInputsTableModule.getContent(), 'inputId');
         },
-        setContent: function (content={}) {
-          _statics.ui.setContent(_dom, content);
+
+        setContent: function (content = {}) {
+          msInputsTableModule.setContent(Utils.obj2arr(content, 'inputId'));
         }
       };
-      
-      _statics.init.initDom(_dom, fieldList, rowThis);
-      
-      return rowThis;
     };
-  }());
-  
-  var _statics = {
-    ui: {
-      render: function (_dom) {
-        return $('<table class="table table-condensed table-hover">').append(
-          _dom.rootTbody);
-      },
-      getContent: function (_dom, _sub) {
-        return _sub.rowList.map(function (row) {
-          return row.getContent();
-        });
-      },
-      setContent: function (_dom, _sub, fieldList, rowContentList) {
-        _dom.rootTbody.empty();
-        _sub.rowList = [];
-        rowContentList.forEach(function (rowContent) {
-          _statics.ui.addRow(_dom, _sub, fieldList, rowContent);
-        });
-      },
-      addRow: function (_dom, _sub, fieldList, rowContent) {
-        var tr = $('<tr>');
-        var row = null;
-        var removeRowFn = function () {
-          tr.remove();
-          _sub.rowList.splice(_sub.rowList.indexOf(row), 1);
-        };
-        fieldList.push({
-          name: 'removeRow',
-          type: 'button',
-          text: '&times;',
-          iconClass: '',
-          style: 'font-size:20px;font-weight:700;',
-          fn: removeRowFn
-        });
-        row = _newRow({
-          fieldList: fieldList
-        });
-        row.setContent(rowContent);
-        _sub.rowList.push(row);
-        _dom.rootTbody.append(
-          tr.append(
-            $('<td>').append(
-              row.render())));
-      }
-      
-    }
-  };
-  
-  return function (config={}) {
-    var fieldList = config.fieldList || [];
-    
-    var _sub = {
-      rowList: []
-    };
-    var _dom = {
-      rootTbody: $('<tbody>')
-    };
-    
-    return {
-      render: function () {
-        return _statics.ui.render(_dom);
-      },
-      getContent: function () {
-        return _statics.ui.getContent(_dom, _sub);
-      },
-      setContent: function (contentList=[]) {
-        _statics.ui.setContent(_dom, _sub, fieldList, contentList);
-      },
-      addRow: function (content={}) {
-        _statics.ui.addRow(_dom, _sub, fieldList, content);
+  }
+    (Utils, newTable));
+
+  //------------------------------------------------------------------------
+  var _newConnectorConfiguration = (function (Utils) {
+    var services = {
+      uploadLocalFile: function (restEndpoint, fileName, fileContent, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/uploadLocalFile', 'fileName=' + fileName, fileContent, successCallback, failureCallback);
       }
     };
-  };
-}());
 
+    return function (config) {
+      var title = config.title || '';
+      var lang = config.lang || '';
+      var mscEndpoint = config.mscEndpoint || '';
 
-/*TEST-START*/
+      var _dom = {
+        messageDiv: $('<div>'),
+        tableTbody: $('<tbody>'),
+        inputs: {}
+      };
 
-var _newMSInputsModule = (function (Utils, newTable) {
-  return function () {
-    var msInputsTableModule = newTable({
-      fieldList: [{
-        name: 'inputId',
-        text: 'Input ID'
-      }, {
-        name: 'matchingName',
-        text: 'Matching Name'
-      }, {
-        name: 'description',
-        text: 'Description'
-      }, {
-        name: 'workingExample',
-        text: 'Working Sample'
-      }]
-    });
-    var _doms = {
-      addMSInputBtn: $('<button class="btn btn-default" type="button">Add new call configuration Input</button>').click(function () {
-        msInputsTableModule.addRow();
-      })
-    };
-    return {
-      render: function () {
-        return $('<div class="panel panel-default">').append(
-          '<div class="panel-heading"><h4 class="panel-title">Call Configuration Inputs</h4></div>').append(
-          $('<div class="panel-body">').append(
-            $('<div class="row form-group">').append(
-              $('<div class="col-lg-3">').append(
-                _doms.addMSInputBtn))).append(
-            $('<div class="row form-group">').append(
-              $('<div class="col-lg-12">').append(
-                msInputsTableModule.render()))));
-      },
+      var _fns = {
+        setContent: function (content = {}) {
+          var templateInputs = content.inputTemplates || {};
+          var inputs = content.inputValues || {};
 
-      getContent: function () {
-        return Utils.arr2obj(msInputsTableModule.getContent(), 'inputId');
-      },
+          _dom.tableTbody.empty();
+          Object.keys(templateInputs).forEach(function (inputId) {
 
-      setContent: function (content = {}) {
-        msInputsTableModule.setContent(Utils.obj2arr(content, 'inputId'));
-      }
-    };
-  };
-}(olive.utils, olive.modules.newTable));
+            var inputName = templateInputs[inputId].name || '';
+            var inputDescription = templateInputs[inputId].description[lang] || '';
+            var inputValue = inputs[inputId] ? (inputs[inputId].value || '') : '';
+            var requireUpload = (templateInputs[inputId].moreInfos != null && templateInputs[inputId].moreInfos.requireUpload != null) ? templateInputs[inputId].moreInfos.requireUpload : false;
+            var rowsNumber = (templateInputs[inputId].moreInfos != null && templateInputs[inputId].moreInfos.rowsNumber != null) ? templateInputs[inputId].moreInfos.rowsNumber : 1;
+            var choiceValues = (templateInputs[inputId].moreInfos != null && templateInputs[inputId].moreInfos.choiceValues != null) ? (templateInputs[inputId].moreInfos.choiceValues instanceof Array ? templateInputs[inputId].moreInfos.choiceValues : null) : null;
 
-var _newConnectorConfiguration = (function (Utils) {
-  var services = {
-    uploadLocalFile: function (restEndpoint, fileName, fileContent, successCallback, failureCallback) {
-      Utils.callService(restEndpoint + 'msc/uploadLocalFile', 'fileName=' + fileName, fileContent, successCallback, failureCallback);
-    }
-  };
+            _dom.inputs[inputId] = {
+              nameSpan: $('<span class="input-group-addon">' + inputName + '</span>').popover({
+                placement: 'auto left',
+                container: 'body',
+                html: true,
+                title: inputName + ' details',
+                content: inputDescription,
+                trigger: 'hover click'
+              })
+            };
 
-  return function (config) {
-    var title = config.title || '';
-    var lang = config.lang || '';
-    var mscEndpoint = config.mscEndpoint || '';
+            if (choiceValues != null) {
+              _dom.inputs[inputId].inputTxt = $('<select class="form-control">').append(choiceValues.map(function (item) {
+                    return '<option value="' + item + '" ' + (item == inputValue ? 'selected' : '') + '>' + item + '</option>';
+                  }));
+            } else {
+              _dom.inputs[inputId].inputTxt = $('<textarea style="width:100%;resize:vertical;" class="form-control" rows="' + rowsNumber + '">' + inputValue + '</textarea>');
+            }
 
-    var _dom = {
-      messageDiv: $('<div>'),
-      tableTbody: $('<tbody>'),
-      inputs: {}
-    };
-
-    var _fns = {
-      setContent: function (content = {}) {
-        var templateInputs = content.inputTemplates || {};
-        var inputs = content.inputValues || {};
-
-        _dom.tableTbody.empty();
-        Object.keys(templateInputs).forEach(function (inputId) {
-
-          var inputName = templateInputs[inputId].name || '';
-          var inputDescription = templateInputs[inputId].description[lang] || '';
-          var inputValue = inputs[inputId] ? (inputs[inputId].value || '') : '';
-          var requireUpload = (templateInputs[inputId].moreInfos != null && templateInputs[inputId].moreInfos.requireUpload != null) ? templateInputs[inputId].moreInfos.requireUpload : false;
-          var rowsNumber = (templateInputs[inputId].moreInfos != null && templateInputs[inputId].moreInfos.rowsNumber != null) ? templateInputs[inputId].moreInfos.rowsNumber : 1;
-          var choiceValues = (templateInputs[inputId].moreInfos != null && templateInputs[inputId].moreInfos.choiceValues != null) ? (templateInputs[inputId].moreInfos.choiceValues instanceof Array ? templateInputs[inputId].moreInfos.choiceValues : null) : null;
-
-          _dom.inputs[inputId] = {
-            nameSpan: $('<span class="input-group-addon">' + inputName + '</span>').popover({
-              placement: 'auto left',
-              container: 'body',
-              html: true,
-              title: inputName + ' details',
-              content: inputDescription,
-              trigger: 'hover click'
-            })
-          };
-
-          if (choiceValues != null) {
-            _dom.inputs[inputId].inputTxt = $('<select class="form-control">').append(choiceValues.map(function (item) {
-                  return '<option value="' + item + '" ' + (item == inputValue ? 'selected' : '') + '>' + item + '</option>';
-                }));
-          } else {
-            _dom.inputs[inputId].inputTxt = $('<textarea style="width:100%;resize:vertical;" class="form-control" rows="' + rowsNumber + '">' + inputValue + '</textarea>');
-          }
-
-          if (requireUpload) {
-            _dom.inputs[inputId].uploadBtn = $('<button class="btn btn-default" type="button">Upload</button>').click(function (e) {
-                e.preventDefault();
-                _dom.inputs[inputId].uploadInputFile.trigger('click');
-              });
-            _dom.inputs[inputId].uploadInputFile = $('<input type="file" style="display: none;">').change(function (e) {
-                var fileName = e.target.files[0].name;
-                Utils.readFileAsArrayBuffer(e.target.files[0], function (content) {
-                  services.uploadLocalFile(mscEndpoint, fileName, content, function (data) {
-                    dom.inputs[inputId].inputTxt.val(data.fileId);
-                    Utils.showSuccess(fileName + ' correctly uploaded', _dom.messageDiv);
-                  }, function (error) {
-                    Utils.showError(error, _dom.messageDiv);
+            if (requireUpload) {
+              _dom.inputs[inputId].uploadBtn = $('<button class="btn btn-default" type="button">Upload</button>').click(function (e) {
+                  e.preventDefault();
+                  _dom.inputs[inputId].uploadInputFile.trigger('click');
+                });
+              _dom.inputs[inputId].uploadInputFile = $('<input type="file" style="display: none;">').change(function (e) {
+                  var fileName = e.target.files[0].name;
+                  Utils.readFileAsArrayBuffer(e.target.files[0], function (content) {
+                    services.uploadLocalFile(mscEndpoint, fileName, content, function (data) {
+                      dom.inputs[inputId].inputTxt.val(data.fileId);
+                      Utils.showSuccess(fileName + ' correctly uploaded', _dom.messageDiv);
+                    }, function (error) {
+                      Utils.showError(error, _dom.messageDiv);
+                    });
                   });
                 });
-              });
-          }
+            }
 
-          _dom.tableTbody.append(
-            $('<tr>').append(
-              $('<td>').append(
-                $('<div class="input-group">').append(
-                  _dom.inputs[inputId].nameSpan).append(
-                  _dom.inputs[inputId].inputTxt).append(
-                  requireUpload ? $('<span class="input-group-btn">').append(_dom.inputs[inputId].uploadBtn).append(_dom.inputs[inputId].uploadInputFile) : null))));
-        });
-      }
-    };
+            _dom.tableTbody.append(
+              $('<tr>').append(
+                $('<td>').append(
+                  $('<div class="input-group">').append(
+                    _dom.inputs[inputId].nameSpan).append(
+                    _dom.inputs[inputId].inputTxt).append(
+                    requireUpload ? $('<span class="input-group-btn">').append(_dom.inputs[inputId].uploadBtn).append(_dom.inputs[inputId].uploadInputFile) : null))));
+          });
+        }
+      };
 
-    return {
-      render: function () {
-        return $('<div class="panel panel-default">').append(
-          $('<div class="panel-heading">' + title + '</div>')).append(
-          _dom.messageDiv).append(
-          $('<table class="table table-condensed table-hover">').append(
-            _dom.tableTbody));
-      },
+      return {
+        render: function () {
+          return $('<div class="panel panel-default">').append(
+            $('<div class="panel-heading">' + title + '</div>')).append(
+            _dom.messageDiv).append(
+            $('<table class="table table-condensed table-hover">').append(
+              _dom.tableTbody));
+        },
 
-      setContent: function (content = {}) {
-        _fns.setContent(content);
-      },
+        setContent: function (content = {}) {
+          _fns.setContent(content);
+        },
 
-      getContent: function () {
-        var ret = {};
-        Object.keys(_dom.inputs).forEach(function (inputId) {
-          ret[inputId] = {
-            value: _dom.inputs[inputId].inputTxt.val()
-          };
-        });
-        return ret;
-      }
-    };
-  };
-}
-  (olive.utils));
-
-var _MSAsyncInputsModule = (function (Utils, newTable) {
-
-  function MSAsyncInputsModule() {
-    this._subs = {
-      msAsyncInputsTableModule: newTable({
-        fieldList: [{
-          name: 'id',
-          text: 'Asynchronous Input ID'
-        }, {
-          name: 'value',
-          text: 'Value'
-        }]
-      })
-    };
-    this._doms = {
-      inputAdaptationAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">'),
-      responseServiceIdTxt: $('<input type="text" class="form-control">'),
-      responseServiceOperationIdTxt: $('<input type="text" class="form-control">'),
-      responseServiceInputIdTxt: $('<input type="text" class="form-control">'),
-      addAsyncRespMsInputBtn: $('<button class="btn btn-default" type="button">Add Response Input</button>').click(function () {
-        //FIXME: not captured by try catch
-        this._subs.msAsyncInputsTableModule.addRow();
-      }
-        .bind(this))
+        getContent: function () {
+          var ret = {};
+          Object.keys(_dom.inputs).forEach(function (inputId) {
+            ret[inputId] = {
+              value: _dom.inputs[inputId].inputTxt.val()
+            };
+          });
+          return ret;
+        }
+      };
     };
   }
+    (Utils));
 
-  MSAsyncInputsModule.prototype.render = function () {
-    return $('<div class="panel panel-default">').append(
-      '<div class="panel-heading"><h4 class="panel-title">Configuration for Management of Asynchronous Responses</h4></div>').append(
-      $('<div class="panel-body">').append(
-        $('<div class="row form-group">').append(
-          $('<div class="col-lg-12">').append(
-            $('<div class="input-group">').append(
-              '<span class="input-group-addon">Input Adaptation Algorithm</span>').append(
-              this._doms.inputAdaptationAlgorithmTxt)))).append(
-        $('<div class="row form-group">').append(
-          $('<div class="col-lg-12">').append(
-            $('<div class="input-group">').append(
-              '<span class="input-group-addon">Responses to Microservice ID</span>').append(
-              this._doms.responseServiceIdTxt).append(
-              '<span class="input-group-addon">using Operation</span>').append(
-              this._doms.responseServiceOperationIdTxt).append(
-              '<span class="input-group-addon">and Input</span>').append(
-              this._doms.responseServiceInputIdTxt)))).append(
-        $('<div class="row form-group">').append(
-          $('<div class="col-lg-3">').append(
-            this._doms.addAsyncRespMsInputBtn))).append(
-        $('<div class="row form-group">').append(
-          $('<div class="col-lg-12">').append(
-            this._subs.msAsyncInputsTableModule.render()))));
-  };
+  //------------------------------------------------------------------------
+  var _MSAsyncInputsModule = (function (Utils, newTable) {
 
-  MSAsyncInputsModule.prototype.getContent = function () {
-    return {
-      responseServiceId: this._doms.responseServiceIdTxt.val(),
-      responseServiceOperationId: this._doms.responseServiceOperationIdTxt.val(),
-      responseServiceInputId: this._doms.responseServiceInputIdTxt.val(),
-      inputAdaptationAlgorithm: this._doms.inputAdaptationAlgorithmTxt.val(),
-      responseServiceOtherInputs: Utils.arr2obj(this._subs.msAsyncInputsTableModule.getContent(), 'id')
-    };
-  };
+    function MSAsyncInputsModule() {
+      this._subs = {
+        msAsyncInputsTableModule: newTable({
+          fieldList: [{
+            name: 'id',
+            text: 'Asynchronous Input ID'
+          }, {
+            name: 'value',
+            text: 'Value'
+          }]
+        })
+      };
+      this._doms = {
+        inputAdaptationAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">'),
+        responseServiceIdTxt: $('<input type="text" class="form-control">'),
+        responseServiceOperationIdTxt: $('<input type="text" class="form-control">'),
+        responseServiceInputIdTxt: $('<input type="text" class="form-control">'),
+        addAsyncRespMsInputBtn: $('<button class="btn btn-default" type="button">Add Response Input</button>').click(function () {
+          //FIXME: not captured by try catch
+          this._subs.msAsyncInputsTableModule.addRow();
+        }
+          .bind(this))
+      };
+    }
 
-  MSAsyncInputsModule.prototype.setContent = function (content = {}) {
-    this._doms.responseServiceIdTxt.val(content.responseServiceId || '');
-    this._doms.responseServiceOperationIdTxt.val(content.responseServiceOperationId || '');
-    this._doms.responseServiceInputIdTxt.val(content.responseServiceInputId || '');
-    this._doms.inputAdaptationAlgorithmTxt.val(content.inputAdaptationAlgorithm || '');
-    this._subs.msAsyncInputsTableModule.setContent(content.responseServiceOtherInputs ? Utils.obj2arr(content.responseServiceOtherInputs, 'id') : []);
-  };
-
-  return MSAsyncInputsModule;
-
-}
-  (olive.utils, olive.modules.newTable));
-
-var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule) {
-
-  function staticSetContent(connectors = {}, content = {}, dom, sub) {
-    dom.idTxt.val(content.id || '');
-    dom.nameTxt.val(content.name || '').trigger('change');
-    dom.descriptionTxt.val(content.description || '');
-    dom.isDefaultChk.prop('checked', content.isDefault || false);
-    dom.isAutostartChk.prop('checked', content.autostart || false);
-
-    var configurationContent = content.configuration || {};
-    var connectorId = configurationContent.connectorId || '';
-    dom.connectorIdSelect.val(connectorId).trigger('change');
-    //staticSetConnectorRelatedContent(connectorId, connectorId, connectors, configurationContent, dom, sub); //triggered by connectorIdSelect change
-  }
-
-  function staticSetConnectorRelatedContent(actualConnectorId, selectedConnectorId, connectors = {}, content = {}, dom, sub) {
-    dom.outputDescriptionTxt.val(content.outputDescription && actualConnectorId === selectedConnectorId ? content.outputDescription : '');
-    dom.outputAdaptationAlgorithmTxt.val(content.outputAdaptationAlgorithm && actualConnectorId === selectedConnectorId ? content.outputAdaptationAlgorithm : '');
-    dom.statusCheckAlgorithmTxt.val(content.statusCheckAlgorithm && actualConnectorId === selectedConnectorId ? content.statusCheckAlgorithm : '');
-
-    sub.startConfigModule.setContent({
-      inputTemplates: connectors[selectedConnectorId] ? connectors[selectedConnectorId].startConfigurationTemplate : {},
-      inputValues: content.configStart && selectedConnectorId === selectedConnectorId ? content.configStart : {}
-    });
-    sub.callConfigModule.setContent({
-      inputTemplates: connectors[selectedConnectorId] ? connectors[selectedConnectorId].callConfigurationTemplate : {},
-      inputValues: content.configCall && selectedConnectorId === selectedConnectorId ? content.configCall : {}
-    });
-
-    sub.msInputsModule.setContent(content.inputs && actualConnectorId===selectedConnectorId?content.inputs:{});
-
-    sub.msAsyncInputsModule.setContent(content.inputsAsync && actualConnectorId===selectedConnectorId?content.inputsAsync:{});
-    dom.asyncInputsDiv.toggle(connectors[selectedConnectorId] && connectors[selectedConnectorId].asyncConnectionRequired?connectors[selectedConnectorId].asyncConnectionRequired:false);
-  }
-
-  function staticGetContent(dom, sub, connectors = {}) {
-    var ret = {
-      id: dom.idTxt.val(),
-      name: dom.nameTxt.val(),
-      description: dom.descriptionTxt.val(),
-      isDefault: dom.isDefaultChk.is(':checked'),
-      autostart: dom.isAutostartChk.is(':checked'),
-      configuration: {
-        connectorId: dom.connectorIdSelect.val(),
-        outputDescription: dom.outputDescriptionTxt.val(),
-        outputAdaptationAlgorithm: dom.outputAdaptationAlgorithmTxt.val(),
-        statusCheckAlgorithm: dom.statusCheckAlgorithmTxt.val(),
-        configStart: sub.startConfigModule.getContent(),
-        configCall: sub.callConfigModule.getContent(),
-        inputs: sub.msInputsModule.getContent()
-      }
-    };
-
-    if (connectors[ret.configuration.connectorId].asyncConnectionRequired)
-      ret.configuration.inputsAsync = sub.msAsyncInputsModule.getContent();
-
-    return ret;
-  }
-
-  function staticInitConnectorSelect(dom, connectors = {}) {
-    dom.connectorIdSelect.empty().append('<option value="">Select a connector</option>');
-    Object.keys(connectors).forEach(function (connectorId) {
-      dom.connectorIdSelect.append(
-        '<option value="' + connectorId + '">' + connectors[connectorId].name + '</option>');
-    });
-    dom.connectorIdSelect.val('').trigger('change');
-  }
-
-  function staticRender(_doms, _subs) {
-    return $('<div class="panel panel-default">').append(
-      _doms.panelHeader.append(
-        $('<div class="btn-group pull-right">').append(
-          _doms.removeRowBtn)).append(
-        $('<h4 class="panel-title">').append(
-          _doms.panelTitleLabel).append(
-          ' <span class="caret">'))).append(
-      _doms.panelCollapsable.append(
+    MSAsyncInputsModule.prototype.render = function () {
+      return $('<div class="panel panel-default">').append(
+        '<div class="panel-heading"><h4 class="panel-title">Configuration for Management of Asynchronous Responses</h4></div>').append(
         $('<div class="panel-body">').append(
           $('<div class="row form-group">').append(
             $('<div class="col-lg-12">').append(
               $('<div class="input-group">').append(
-                '<span class="input-group-addon">Operation ID</span>').append(
-                _doms.idTxt).append(
-                '<span class="input-group-addon">Name</span>').append(
-                _doms.nameTxt).append(
-                '<span class="input-group-addon">Description</span>').append(
-                _doms.descriptionTxt).append(
-                '<span class="input-group-addon">Is Default?</span>').append(
-                $('<span class="input-group-addon">').append(
-                  _doms.isDefaultChk)).append(
-                $('<span class="input-group-addon">Autostart?</span>')).append(
-                $('<span class="input-group-addon">').append(
-                  _doms.isAutostartChk))))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-4">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Connector</span>').append(
-                _doms.connectorIdSelect))).append(
-            $('<div class="col-lg-8">').append(
-              _doms.connectorDescDiv))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-6">').append(
-              _subs.startConfigModule.render())).append(
-            $('<div class="col-lg-6">').append(
-              _subs.callConfigModule.render()))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              _subs.msInputsModule.render()))).append(
-          _doms.asyncInputsDiv.append(
-            $('<div class="col-lg-12">').append(
-              _subs.msAsyncInputsModule.render()))).append(
+                '<span class="input-group-addon">Input Adaptation Algorithm</span>').append(
+                this._doms.inputAdaptationAlgorithmTxt)))).append(
           $('<div class="row form-group">').append(
             $('<div class="col-lg-12">').append(
               $('<div class="input-group">').append(
-                '<span class="input-group-addon">Connector Output Description</span>').append(
-                _doms.connectorOutputDescTxt)))).append(
+                '<span class="input-group-addon">Responses to Microservice ID</span>').append(
+                this._doms.responseServiceIdTxt).append(
+                '<span class="input-group-addon">using Operation</span>').append(
+                this._doms.responseServiceOperationIdTxt).append(
+                '<span class="input-group-addon">and Input</span>').append(
+                this._doms.responseServiceInputIdTxt)))).append(
+          $('<div class="row form-group">').append(
+            $('<div class="col-lg-3">').append(
+              this._doms.addAsyncRespMsInputBtn))).append(
           $('<div class="row form-group">').append(
             $('<div class="col-lg-12">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Output Description</span>').append(
-                _doms.outputDescriptionTxt)))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Output Adaptation Algorithm</span>').append(
-                _doms.outputAdaptationAlgorithmTxt)))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Status Check Algorithm</span>').append(
-                _doms.statusCheckAlgorithmTxt))))));
+              this._subs.msAsyncInputsTableModule.render()))));
+    };
+
+    MSAsyncInputsModule.prototype.getContent = function () {
+      return {
+        responseServiceId: this._doms.responseServiceIdTxt.val(),
+        responseServiceOperationId: this._doms.responseServiceOperationIdTxt.val(),
+        responseServiceInputId: this._doms.responseServiceInputIdTxt.val(),
+        inputAdaptationAlgorithm: this._doms.inputAdaptationAlgorithmTxt.val(),
+        responseServiceOtherInputs: Utils.arr2obj(this._subs.msAsyncInputsTableModule.getContent(), 'id')
+      };
+    };
+
+    MSAsyncInputsModule.prototype.setContent = function (content = {}) {
+      this._doms.responseServiceIdTxt.val(content.responseServiceId || '');
+      this._doms.responseServiceOperationIdTxt.val(content.responseServiceOperationId || '');
+      this._doms.responseServiceInputIdTxt.val(content.responseServiceInputId || '');
+      this._doms.inputAdaptationAlgorithmTxt.val(content.inputAdaptationAlgorithm || '');
+      this._subs.msAsyncInputsTableModule.setContent(content.responseServiceOtherInputs ? Utils.obj2arr(content.responseServiceOtherInputs, 'id') : []);
+    };
+
+    return MSAsyncInputsModule;
+
   }
+    (Utils, newTable));
 
-  return function (config = {}, removeBtnHandlerFn = function () {}, defaultChkChangeHandlerFn = function () {}) {
-    var lang = config.lang || '';
-    var mscEndpoint = config.mscEndpoint || '';
-    var connectors = config.connectors || {};
+  //------------------------------------------------------------------------
+  var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule) {
 
-    var _content = {};
-    var _subs = {
-      startConfigModule: _newConnectorConfiguration({
-        title: 'Start configuration',
-        lang: lang,
-        mscEndpoint: mscEndpoint
-      }),
-      callConfigModule: _newConnectorConfiguration({
-        title: 'Call configuration',
-        lang: lang,
-        mscEndpoint: mscEndpoint
-      }),
-      msInputsModule: _newMSInputsModule(),
-      msAsyncInputsModule: new _MSAsyncInputsModule()
+    function staticSetContent(connectors = {}, content = {}, dom, sub) {
+      dom.idTxt.val(content.id || '');
+      dom.nameTxt.val(content.name || '').trigger('change');
+      dom.descriptionTxt.val(content.description || '');
+      dom.isDefaultChk.prop('checked', content.isDefault || false);
+      dom.isAutostartChk.prop('checked', content.autostart || false);
+
+      var configurationContent = content.configuration || {};
+      var connectorId = configurationContent.connectorId || '';
+      dom.connectorIdSelect.val(connectorId).trigger('change');
+      //staticSetConnectorRelatedContent(connectorId, connectorId, connectors, configurationContent, dom, sub); //triggered by connectorIdSelect change
+    }
+
+    function staticSetConnectorRelatedContent(actualConnectorId, selectedConnectorId, connectors = {}, content = {}, dom, sub) {
+      dom.outputDescriptionTxt.val(content.outputDescription && actualConnectorId === selectedConnectorId ? content.outputDescription : '');
+      dom.outputAdaptationAlgorithmTxt.val(content.outputAdaptationAlgorithm && actualConnectorId === selectedConnectorId ? content.outputAdaptationAlgorithm : '');
+      dom.statusCheckAlgorithmTxt.val(content.statusCheckAlgorithm && actualConnectorId === selectedConnectorId ? content.statusCheckAlgorithm : '');
+
+      sub.startConfigModule.setContent({
+        inputTemplates: connectors[selectedConnectorId] ? connectors[selectedConnectorId].startConfigurationTemplate : {},
+        inputValues: content.configStart && selectedConnectorId === selectedConnectorId ? content.configStart : {}
+      });
+      sub.callConfigModule.setContent({
+        inputTemplates: connectors[selectedConnectorId] ? connectors[selectedConnectorId].callConfigurationTemplate : {},
+        inputValues: content.configCall && selectedConnectorId === selectedConnectorId ? content.configCall : {}
+      });
+
+      sub.msInputsModule.setContent(content.inputs && actualConnectorId===selectedConnectorId?content.inputs:{});
+
+      sub.msAsyncInputsModule.setContent(content.inputsAsync && actualConnectorId===selectedConnectorId?content.inputsAsync:{});
+      dom.asyncInputsDiv.toggle(connectors[selectedConnectorId] && connectors[selectedConnectorId].asyncConnectionRequired?connectors[selectedConnectorId].asyncConnectionRequired:false);
+    }
+
+    function staticGetContent(dom, sub, connectors = {}) {
+      var ret = {
+        id: dom.idTxt.val(),
+        name: dom.nameTxt.val(),
+        description: dom.descriptionTxt.val(),
+        isDefault: dom.isDefaultChk.is(':checked'),
+        autostart: dom.isAutostartChk.is(':checked'),
+        configuration: {
+          connectorId: dom.connectorIdSelect.val(),
+          outputDescription: dom.outputDescriptionTxt.val(),
+          outputAdaptationAlgorithm: dom.outputAdaptationAlgorithmTxt.val(),
+          statusCheckAlgorithm: dom.statusCheckAlgorithmTxt.val(),
+          configStart: sub.startConfigModule.getContent(),
+          configCall: sub.callConfigModule.getContent(),
+          inputs: sub.msInputsModule.getContent()
+        }
+      };
+
+      if (connectors[ret.configuration.connectorId].asyncConnectionRequired)
+        ret.configuration.inputsAsync = sub.msAsyncInputsModule.getContent();
+
+      return ret;
+    }
+
+    function staticInitConnectorSelect(dom, connectors = {}) {
+      dom.connectorIdSelect.empty().append('<option value="">Select a connector</option>');
+      Object.keys(connectors).forEach(function (connectorId) {
+        dom.connectorIdSelect.append(
+          '<option value="' + connectorId + '">' + connectors[connectorId].name + '</option>');
+      });
+      dom.connectorIdSelect.val('').trigger('change');
+    }
+
+    function staticRender(_doms, _subs) {
+      return $('<div class="panel panel-default">').append(
+        _doms.panelHeader.append(
+          $('<div class="btn-group pull-right">').append(
+            _doms.removeRowBtn)).append(
+          $('<h4 class="panel-title">').append(
+            _doms.panelTitleLabel).append(
+            ' <span class="caret">'))).append(
+        _doms.panelCollapsable.append(
+          $('<div class="panel-body">').append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Operation ID</span>').append(
+                  _doms.idTxt).append(
+                  '<span class="input-group-addon">Name</span>').append(
+                  _doms.nameTxt).append(
+                  '<span class="input-group-addon">Description</span>').append(
+                  _doms.descriptionTxt).append(
+                  '<span class="input-group-addon">Is Default?</span>').append(
+                  $('<span class="input-group-addon">').append(
+                    _doms.isDefaultChk)).append(
+                  $('<span class="input-group-addon">Autostart?</span>')).append(
+                  $('<span class="input-group-addon">').append(
+                    _doms.isAutostartChk))))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-4">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Connector</span>').append(
+                  _doms.connectorIdSelect))).append(
+              $('<div class="col-lg-8">').append(
+                _doms.connectorDescDiv))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-6">').append(
+                _subs.startConfigModule.render())).append(
+              $('<div class="col-lg-6">').append(
+                _subs.callConfigModule.render()))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                _subs.msInputsModule.render()))).append(
+            _doms.asyncInputsDiv.append(
+              $('<div class="col-lg-12">').append(
+                _subs.msAsyncInputsModule.render()))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Connector Output Description</span>').append(
+                  _doms.connectorOutputDescTxt)))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Output Description</span>').append(
+                  _doms.outputDescriptionTxt)))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Output Adaptation Algorithm</span>').append(
+                  _doms.outputAdaptationAlgorithmTxt)))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Status Check Algorithm</span>').append(
+                  _doms.statusCheckAlgorithmTxt))))));
+    }
+
+    return function (config = {}, removeBtnHandlerFn = function () {}, defaultChkChangeHandlerFn = function () {}) {
+      var lang = config.lang || '';
+      var mscEndpoint = config.mscEndpoint || '';
+      var connectors = config.connectors || {};
+
+      var _content = {};
+      var _subs = {
+        startConfigModule: _newConnectorConfiguration({
+          title: 'Start configuration',
+          lang: lang,
+          mscEndpoint: mscEndpoint
+        }),
+        callConfigModule: _newConnectorConfiguration({
+          title: 'Call configuration',
+          lang: lang,
+          mscEndpoint: mscEndpoint
+        }),
+        msInputsModule: _newMSInputsModule(),
+        msAsyncInputsModule: new _MSAsyncInputsModule()
+      };
+      var _doms = {
+        panelHeader: $('<div class="panel-heading link">').click(function () {
+          _doms.panelCollapsable.collapse('toggle');
+        }),
+        panelCollapsable: $('<div class="panel-collapse collapse">'),
+        panelTitleLabel: $('<span>'),
+        removeRowBtn: $('<button class="btn btn-default btn-xs" type="button">Delete</button>').click(removeBtnHandlerFn),
+
+        asyncInputsDiv: $('<div class="row form-group">'),
+
+        idTxt: $('<input type="text" class="form-control">'),
+        nameTxt: $('<input type="text" class="form-control">').change(function () {
+          _doms.panelTitleLabel.html('Operation ' + _doms.nameTxt.val());
+        }),
+        descriptionTxt: $('<input type="text" class="form-control">'),
+        isDefaultChk: $('<input type="checkbox" aria-label="Is default?">').change(defaultChkChangeHandlerFn),
+        isAutostartChk: $('<input type="checkbox" aria-label="Autostart?">'),
+        connectorIdSelect: $('<select class="form-control">').change(function () {
+          var selectedConnectorId = _doms.connectorIdSelect.val();
+          _doms.connectorDescDiv.html(connectors[selectedConnectorId] ? connectors[selectedConnectorId].description[lang] : '');
+          _doms.connectorOutputDescTxt.val(connectors[selectedConnectorId] ? connectors[selectedConnectorId].outputDescription : '');
+
+          staticSetConnectorRelatedContent(_content.configuration ? _content.configuration.connectorId : '', selectedConnectorId, connectors, _content.configuration, _doms, _subs);
+        }),
+        connectorDescDiv: $('<pre>'),
+        connectorOutputDescTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control" readonly>'),
+        outputDescriptionTxt: $('<textarea style="resize:vertical;" rows="5" class="form-control">'),
+        outputAdaptationAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">'),
+        statusCheckAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">')
+      };
+
+      staticInitConnectorSelect(_doms, connectors);
+
+      return {
+        render: function () {
+          return staticRender(_doms, _subs);
+        },
+        setContent: function (content = {}) {
+          _content = content;
+          staticSetContent(connectors, content, _doms, _subs);
+        },
+        getContent: function () {
+          return staticGetContent(_doms, _subs, connectors);
+        },
+        isDefault: function () {
+          return _doms.isDefaultChk.is(':checked');
+        },
+        setDefault: function (bool) {
+          _doms.isDefaultChk.prop('checked', bool || false);
+        },
+        getId: function () {
+          return _doms.idTxt.val();
+        }
+      };
     };
-    var _doms = {
-      panelHeader: $('<div class="panel-heading link">').click(function () {
-        _doms.panelCollapsable.collapse('toggle');
-      }),
-      panelCollapsable: $('<div class="panel-collapse collapse">'),
-      panelTitleLabel: $('<span>'),
-      removeRowBtn: $('<button class="btn btn-default btn-xs" type="button">Delete</button>').click(removeBtnHandlerFn),
-
-      asyncInputsDiv: $('<div class="row form-group">'),
-
-      idTxt: $('<input type="text" class="form-control">'),
-      nameTxt: $('<input type="text" class="form-control">').change(function () {
-        _doms.panelTitleLabel.html('Operation ' + _doms.nameTxt.val());
-      }),
-      descriptionTxt: $('<input type="text" class="form-control">'),
-      isDefaultChk: $('<input type="checkbox" aria-label="Is default?">').change(defaultChkChangeHandlerFn),
-      isAutostartChk: $('<input type="checkbox" aria-label="Autostart?">'),
-      connectorIdSelect: $('<select class="form-control">').change(function () {
-        var selectedConnectorId = _doms.connectorIdSelect.val();
-        _doms.connectorDescDiv.html(connectors[selectedConnectorId] ? connectors[selectedConnectorId].description[lang] : '');
-        _doms.connectorOutputDescTxt.val(connectors[selectedConnectorId] ? connectors[selectedConnectorId].outputDescription : '');
-
-        staticSetConnectorRelatedContent(_content.configuration ? _content.configuration.connectorId : '', selectedConnectorId, connectors, _content.configuration, _doms, _subs);
-      }),
-      connectorDescDiv: $('<pre>'),
-      connectorOutputDescTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control" readonly>'),
-      outputDescriptionTxt: $('<textarea style="resize:vertical;" rows="5" class="form-control">'),
-      outputAdaptationAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">'),
-      statusCheckAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">')
-    };
-
-    staticInitConnectorSelect(_doms, connectors);
-
-    return {
-      render: function () {
-        return staticRender(_doms, _subs);
-      },
-      setContent: function (content = {}) {
-        _content = content;
-        staticSetContent(connectors, content, _doms, _subs);
-      },
-      getContent: function () {
-        return staticGetContent(_doms, _subs, connectors);
-      },
-      isDefault: function () {
-        return _doms.isDefaultChk.is(':checked');
-      },
-      setDefault: function (bool) {
-        _doms.isDefaultChk.prop('checked', bool || false);
-      },
-      getId: function () {
-        return _doms.idTxt.val();
-      }
-    };
-  };
-}
-  (olive.utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule));
-
-var _newMSDetailsModule = (function (Utils) {
-  return function () {
-
-    var _doms = {
-      ownerHtmlTxt: $('<input type="text" class="form-control">'),
-      presentationImageUrlTxt: $('<input type="text" class="form-control">'),
-      descriptionHtmlDiv: $('<div>'),
-      imageUploadBtn: $('<button class="btn btn-default" type="button">Upload</button>').click(function (e) {
-        e.preventDefault();
-        _doms.imageUploadFile.trigger('click');
-      }),
-      imageUploadFile: $('<input type="file" style="display: none;">').change(function (e) {
-        var fileName = e.target.files[0].name;
-        Utils.readFileAsDataURL(e.target.files[0], function (content) {
-          _doms.presentationImageUrlTxt.val(content);
-        });
-      })
-    };
-
-    _doms.descriptionHtmlParent = $('<div class="input-group">').append(
-        '<span class="input-group-addon">Details</span>').append(
-        _doms.descriptionHtmlDiv);
-
-    static_init(_doms);
-
-    return {
-      render: function () {
-        return $('<div>').append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Owner</span>').append(
-                _doms.ownerHtmlTxt)))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Image URL</span>').append(
-                _doms.presentationImageUrlTxt).append(
-                $('<span class="input-group-btn">').append(
-                  _doms.imageUploadBtn).append(
-                  _doms.imageUploadFile))))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              _doms.descriptionHtmlParent)));
-      },
-      getContent: function () {
-        return {
-          ownerHtml: _doms.ownerHtmlTxt.val(),
-          presentationImageUrl: _doms.presentationImageUrlTxt.val(),
-          descriptionHtml: _doms.descriptionHtmlDiv.summernote('code')
-        };
-      },
-      setContent: function (content = {}) {
-        _doms.ownerHtmlTxt.val(content.ownerHtml || '');
-        _doms.presentationImageUrlTxt.val(content.presentationImageUrl || '');
-        _doms.descriptionHtmlDiv.summernote('insertText', content.descriptionHtml || '');
-      }
-    };
-  };
-
-  function static_init(_doms) {
-    _doms.descriptionHtmlDiv.summernote();
   }
-}
-  (olive.utils));
+    (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule));
 
-var newMSModule = (function (Utils, _newMSDetailsModule, _newMSOperationModule) {
+  //------------------------------------------------------------------------
+  var _newMSDetailsModule = (function (Utils) {
+    return function () {
+
+      var _doms = {
+        ownerHtmlTxt: $('<input type="text" class="form-control">'),
+        presentationImageUrlTxt: $('<input type="text" class="form-control">'),
+        descriptionHtmlDiv: $('<div>'),
+        imageUploadBtn: $('<button class="btn btn-default" type="button">Upload</button>').click(function (e) {
+          e.preventDefault();
+          _doms.imageUploadFile.trigger('click');
+        }),
+        imageUploadFile: $('<input type="file" style="display: none;">').change(function (e) {
+          var fileName = e.target.files[0].name;
+          Utils.readFileAsDataURL(e.target.files[0], function (content) {
+            _doms.presentationImageUrlTxt.val(content);
+          });
+        })
+      };
+
+      _doms.descriptionHtmlParent = $('<div class="input-group">').append(
+          '<span class="input-group-addon">Details</span>').append(
+          _doms.descriptionHtmlDiv);
+
+      static_init(_doms);
+
+      return {
+        render: function () {
+          return $('<div>').append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Owner</span>').append(
+                  _doms.ownerHtmlTxt)))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                $('<div class="input-group">').append(
+                  '<span class="input-group-addon">Image URL</span>').append(
+                  _doms.presentationImageUrlTxt).append(
+                  $('<span class="input-group-btn">').append(
+                    _doms.imageUploadBtn).append(
+                    _doms.imageUploadFile))))).append(
+            $('<div class="row form-group">').append(
+              $('<div class="col-lg-12">').append(
+                _doms.descriptionHtmlParent)));
+        },
+        getContent: function () {
+          return {
+            ownerHtml: _doms.ownerHtmlTxt.val(),
+            presentationImageUrl: _doms.presentationImageUrlTxt.val(),
+            descriptionHtml: _doms.descriptionHtmlDiv.summernote('code')
+          };
+        },
+        setContent: function (content = {}) {
+          _doms.ownerHtmlTxt.val(content.ownerHtml || '');
+          _doms.presentationImageUrlTxt.val(content.presentationImageUrl || '');
+          _doms.descriptionHtmlDiv.summernote('insertText', content.descriptionHtml || '');
+        }
+      };
+    };
+
+    function static_init(_doms) {
+      _doms.descriptionHtmlDiv.summernote();
+    }
+  }
+    (Utils));
+  
+  
+  //------------------------------------------------------------------------
   return function (config = {}) {
     config.lang = config.lang || '';
     config.mscEndpoint = config.mscEndpoint || '';
@@ -1139,12 +1146,10 @@ var newMSModule = (function (Utils, _newMSDetailsModule, _newMSOperationModule) 
       _doms.operationsDiv);
   }
 
-}
-  (olive.utils, _newMSDetailsModule, _newMSOperationModule));
+}(olive.utils, olive.modules.newTable));
 
-/*TEST-END*/
-
-var newAdminModule = (function (Utils, newTable, newMicroserviceCallConfigUI, newMSModule) {
+//------------------------------------------------------------------------
+olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallConfigUI, newMicroserviceDefinitionUI) {
 
   var _statics = {
     retrieveAllMicroservices: function (restEndpoint, successCallback, failureCallback) {
@@ -1256,7 +1261,7 @@ var newAdminModule = (function (Utils, newTable, newMicroserviceCallConfigUI, ne
         //window.open(config.mscEndpoint, '_blank').focus();
         _statics.createDemoMicroserviceConfiguration(mscEndpoint, function (data) {
 
-          var msModule = newMSModule({
+          var msModule = newMicroserviceDefinitionUI({
               lang: 'en',
               mscEndpoint: mscEndpoint,
               connectors: connectors
@@ -1281,7 +1286,7 @@ var newAdminModule = (function (Utils, newTable, newMicroserviceCallConfigUI, ne
 
       newMicroserviceBtn: $('<button class="btn btn-default" type="button">New</button>').click(function () {
 
-        var msModule = newMSModule({
+        var msModule = newMicroserviceDefinitionUI({
             lang: 'en',
             mscEndpoint: mscEndpoint,
             connectors: connectors
@@ -1427,4 +1432,4 @@ var newAdminModule = (function (Utils, newTable, newMicroserviceCallConfigUI, ne
       }
     };
   };
-}(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceCallConfigUI, newMSModule));
+}(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceCallConfigUI, olive.modules.newMicroserviceDefinitionUI));
