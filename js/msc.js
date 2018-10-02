@@ -644,86 +644,7 @@ var _newConnectorConfiguration = (function (Utils) {
   };
 }
   (olive.utils));
-/*
-var _newMSAsyncInputsTableModule = (function () {
 
-  var _newTableRowMSAsyncInputModule = function (removeBtnHandlerFn = function () {}) {
-    var _dom = {
-      responseInputIdTxt: $('<input type="text" class="form-control">'),
-      responseInputValueTxt: $('<input type="text" class="form-control">'),
-      removeRowBtn: $('<div class="input-group-addon link" style="font-size:20px;font-weight:700;">&times;</div>').click(removeBtnHandlerFn)
-    };
-    return {
-      render: function () {
-        return $('<div class="input-group">').append(
-          '<span class="input-group-addon">Asynchronous Input ID</span>').append(
-          _dom.responseInputIdTxt).append(
-          '<span class="input-group-addon">Value</span>').append(
-          _dom.responseInputValueTxt).append(
-          _dom.removeRowBtn);
-      },
-      getContent: function () {
-        return {
-          id: _dom.responseInputIdTxt.val(),
-          value: _dom.responseInputValueTxt.val()
-        };
-      },
-      setContent: function (content) {
-        _dom.responseInputIdTxt.val(content.id || '');
-        _dom.responseInputValueTxt.val(content.value || '');
-      }
-    };
-  };
-
-  return function () {
-    var _rowModuleList = [];
-    var _dom = {
-      rootTbody: $('<tbody>')
-    };
-    var _fns = {
-      addRow: function (content = {}) {
-        var tr = $('<tr>');
-        var newRow = _newTableRowMSAsyncInputModule(function () {
-            tr.remove();
-            _rowModuleList.splice(_rowModuleList.indexOf(newRow), 1);
-          });
-        newRow.setContent(content);
-        _rowModuleList.push(newRow);
-        _dom.rootTbody.append(
-          tr.append(
-            $('<td>').append(
-              newRow.render())));
-        return this;
-      },
-
-      getContent: function () {
-        return _rowModuleList.map(function (_rowModule) {
-          return _rowModule.getContent();
-        });
-      },
-
-      setContent: function (contentArray) {
-        _dom.rootTbody.empty();
-        _rowModuleList = [];
-        contentArray.forEach(function (config) {
-          _fns.addRow(config);
-        });
-      }
-    };
-
-    return {
-      render: function () {
-        return $('<table class="table table-condensed table-hover">').append(
-          _dom.rootTbody);
-      },
-      getContent: _fns.getContent,
-      setContent: _fns.setContent,
-      addRow: _fns.addRow
-    };
-  };
-}
-  ());
-*/
 var _MSAsyncInputsModule = (function (Utils, newTable) {
 
   function MSAsyncInputsModule() {
@@ -811,7 +732,7 @@ var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMS
 
     var configurationContent = content.configuration || {};
     var connectorId = configurationContent.connectorId || '';
-    dom.connectorIdSelect.val(connectorId).trigger('change');
+    dom.connectorIdSelect.val(connectorId);//.trigger('change');
     staticSetConnectorRelatedContent(connectorId, connectorId, connectors, configurationContent, dom, sub);
   }
 
