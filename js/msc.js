@@ -490,94 +490,7 @@ olive.modules.newTable = (function () {
 
 
 /*TEST-START*/
-/*
-var _newMSInputsTableModule = (function () {
 
-  var _newTableRowMSInputModule = function (removeBtnHandlerFn = function () {}) {
-    var _dom = {
-      inputIdTxt: $('<input type="text" class="form-control">'),
-      matchingNameTxt: $('<input type="text" class="form-control">'),
-      descriptionTxt: $('<input type="text" class="form-control">'),
-      workingExampleTxt: $('<input type="text" class="form-control">'),
-      removeRowBtn: $('<div class="input-group-addon link" style="font-size:20px;font-weight:700;">&times;</div>').click(removeBtnHandlerFn)
-    };
-    return {
-      render: function () {
-        return $('<div class="input-group">').append(
-          '<span class="input-group-addon">Input ID</span>').append(
-          _dom.inputIdTxt).append(
-          '<span class="input-group-addon">Matching Name</span>').append(
-          _dom.matchingNameTxt).append(
-          '<span class="input-group-addon">Description</span>').append(
-          _dom.descriptionTxt).append(
-          '<span class="input-group-addon">Working Sample</span>').append(
-          _dom.workingExampleTxt).append(
-          _dom.removeRowBtn);
-      },
-      getContent: function () {
-        return {
-          inputId: _dom.inputIdTxt.val(),
-          matchingName: _dom.matchingNameTxt.val(),
-          description: _dom.descriptionTxt.val(),
-          workingExample: _dom.workingExampleTxt.val()
-        };
-      },
-      setContent: function (content = {}) {
-        _dom.inputIdTxt.val(content.inputId || '');
-        _dom.matchingNameTxt.val(content.matchingName || '');
-        _dom.descriptionTxt.val(content.description || '');
-        _dom.workingExampleTxt.val(content.workingExample || '');
-      }
-    };
-  };
-
-  return function () {
-    var _rowModuleList = [];
-    var _dom = {
-      rootTbody: $('<tbody>')
-    };
-    var _fns = {
-      addRow: function (content = {}) {
-        var tr = $('<tr>');
-        var newRow = _newTableRowMSInputModule(function () {
-            tr.remove();
-            _rowModuleList.splice(_rowModuleList.indexOf(newRow), 1);
-          });
-        newRow.setContent(content);
-        _rowModuleList.push(newRow);
-        _dom.rootTbody.append(
-          tr.append(
-            $('<td>').append(
-              newRow.render())));
-      },
-
-      getContent: function () {
-        return _rowModuleList.map(function (_rowModule) {
-          return _rowModule.getContent();
-        });
-      },
-
-      setContent: function (contentArray) {
-        _dom.rootTbody.empty();
-        _rowModuleList = [];
-        contentArray.forEach(function (config) {
-          _fns.addRow(config);
-        });
-      }
-    };
-
-    return {
-      render: function () {
-        return $('<table class="table table-condensed table-hover">').append(
-          _dom.rootTbody);
-      },
-      getContent: _fns.getContent,
-      setContent: _fns.setContent,
-      addRow: _fns.addRow
-    };
-  };
-}());
-*/
 var _newMSInputsModule = (function (Utils, newTable) {
   return function () {
     var msInputsTableModule = newTable({
@@ -731,7 +644,7 @@ var _newConnectorConfiguration = (function (Utils) {
   };
 }
   (olive.utils));
-
+/*
 var _newMSAsyncInputsTableModule = (function () {
 
   var _newTableRowMSAsyncInputModule = function (removeBtnHandlerFn = function () {}) {
@@ -810,12 +723,20 @@ var _newMSAsyncInputsTableModule = (function () {
   };
 }
   ());
-
-var _MSAsyncInputsModule = (function (Utils, _newMSAsyncInputsTableModule) {
+*/
+var _MSAsyncInputsModule = (function (Utils, newTable) {
 
   function MSAsyncInputsModule() {
     this._subs = {
-      msAsyncInputsTableModule: _newMSAsyncInputsTableModule()
+      msAsyncInputsTableModule: newTable({
+        fieldList: [{
+          name: 'id',
+          text: 'Asynchronous Input ID'
+        }, {
+          name: 'value',
+          text: 'Value'
+        }]
+      })
     };
     this._doms = {
       inputAdaptationAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">'),
@@ -877,7 +798,7 @@ var _MSAsyncInputsModule = (function (Utils, _newMSAsyncInputsTableModule) {
   return MSAsyncInputsModule;
 
 }
-  (olive.utils, _newMSAsyncInputsTableModule));
+  (olive.utils, olive.modules.newTable));
 
 var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule) {
 
