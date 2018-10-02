@@ -733,7 +733,7 @@ var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMS
     var configurationContent = content.configuration || {};
     var connectorId = configurationContent.connectorId || '';
     dom.connectorIdSelect.val(connectorId).trigger('change');
-    //staticSetConnectorRelatedContent(connectorId, connectorId, connectors, configurationContent, dom, sub);
+    //staticSetConnectorRelatedContent(connectorId, connectorId, connectors, configurationContent, dom, sub); //triggered by connectorIdSelect change
   }
 
   function staticSetConnectorRelatedContent(actualConnectorId, selectedConnectorId, connectors = {}, content = {}, dom, sub) {
@@ -750,9 +750,9 @@ var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMS
       inputValues: content.configCall && selectedConnectorId === selectedConnectorId ? content.configCall : {}
     });
 
-    sub.msInputsModule.setContent(content.inputs || {});
+    sub.msInputsModule.setContent(content.inputs && actualConnectorId===selectedConnectorId?content.inputs:{});
 
-    sub.msAsyncInputsModule.setContent(content.inputsAsync || {});
+    sub.msAsyncInputsModule.setContent(content.inputsAsync && actualConnectorId===selectedConnectorId?content.inputsAsync:{});
     dom.asyncInputsDiv.toggle(connectors[selectedConnectorId] && connectors[selectedConnectorId].asyncConnectionRequired);
   }
 
