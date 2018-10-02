@@ -486,7 +486,7 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
       }
     };
   }
-}(olive.utils, ace || null));
+}(olive.utils, ace));
 
 //------------------------------------------------------------------------
 olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
