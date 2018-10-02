@@ -753,7 +753,7 @@ var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMS
     sub.msInputsModule.setContent(content.inputs && actualConnectorId===selectedConnectorId?content.inputs:{});
 
     sub.msAsyncInputsModule.setContent(content.inputsAsync && actualConnectorId===selectedConnectorId?content.inputsAsync:{});
-    dom.asyncInputsDiv.toggle(connectors[selectedConnectorId] && connectors[selectedConnectorId].asyncConnectionRequired);
+    dom.asyncInputsDiv.toggle(connectors[selectedConnectorId] && connectors[selectedConnectorId].asyncConnectionRequired?connectors[selectedConnectorId].asyncConnectionRequired:false);
   }
 
   function staticGetContent(dom, sub, connectors = {}) {
