@@ -1,5 +1,7 @@
 'use strict';
-this.olive = {};
+this.olive = {
+  modules: {}
+};
 //------------------------------------------------------------------------
 olive.utils = (function () {
   var _utils = {
@@ -141,7 +143,7 @@ olive.utils = (function () {
 }());
 
 //------------------------------------------------------------------------
-olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
+olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
 
   var _statics = {
     services: {
@@ -173,24 +175,24 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
         }
     },
     init: {
-      initACEEditor: function (_dom, _status) {
-        _status.aceEditor = ace.edit(_dom.microserviceOutputAdaptAlgDiv[0], {
+      initACEEditor: function (_dom, _state) {
+        _state.aceEditor = ace.edit(_dom.microserviceOutputAdaptAlgDiv[0], {
             mode: "ace/mode/javascript",
             autoScrollEditorIntoView: true,
             minLines: 5
           });
       },
-      initMsInputsDom: function (_dom, _status, mscEndpoint, microserviceId, operationId) {
+      initMsInputsDom: function (_dom, _state, mscEndpoint, microserviceId, operationId) {
         _statics.services.getMicroserviceIOInfo(mscEndpoint, microserviceId, operationId, function (msIOInfo) {
           Object.keys(msIOInfo.requiredInputTemplate).forEach(function (inputId) {
-            _status.requiredInputs[inputId] = {
+            _state.requiredInputs[inputId] = {
               value: ''
             };
             var inputInfos = msIOInfo.requiredInputTemplate[inputId];
             _dom.inputTxts[inputId] = $('<textarea style="resize:vertical;" rows="1" class="form-control" placeholder="' + inputInfos.workingExample + '">' + inputInfos.workingExample + '</textarea>');
             _dom.resultDescriptionSpan.text(msIOInfo.outputDescription);
             _dom.callEndpointSpan.text(mscEndpoint + '?microserviceId=' + microserviceId + '&operationId=' + operationId);
-            _dom.callInputJsonPre.html(JSON.stringify(_status.requiredInputs, null, 4));
+            _dom.callInputJsonPre.html(JSON.stringify(_state.requiredInputs, null, 4));
 
             _dom.tableTbody.append(
               $('<tr>').append(
@@ -245,46 +247,44 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
                 $('<div class="panel-body">').append(
                   _dom.resultDemoDiv)))));
       },
-      afterRender: function (_dom, _status) {
+      afterRender: function (_dom, _state) {
         _dom.microserviceOutputAdaptAlgDiv.width(_dom.microserviceOutputAdaptAlgDiv.parent().width());
         _dom.microserviceOutputAdaptAlgDiv.height(250);
-        _statics.init.initACEEditor(_dom, _status);
-        _status.aceEditor.resize();
+        _statics.init.initACEEditor(_dom, _state);
+        _state.aceEditor.resize();
       },
-      
-      getContent: function (_dom, _status) {
+      getContent: function (_dom, _state) {
         return {
           microserviceInputs: (function () {
-            Object.keys(_status.requiredInputs).forEach(function (inputId) {
-              _status.requiredInputs[inputId].value = _dom.inputTxts[inputId].val();
+            Object.keys(_state.requiredInputs).forEach(function (inputId) {
+              _state.requiredInputs[inputId].value = _dom.inputTxts[inputId].val();
             });
-            return _status.requiredInputs;
+            return _state.requiredInputs;
           }()),
           serviceName: _dom.serviceNameTxt.val(),
-          microserviceOutputAdaptAlg: _status.aceEditor.getValue()
+          microserviceOutputAdaptAlg: _state.aceEditor.getValue()
         };
       },
-
-      setContent: function (_dom, _status, content) {
+      setContent: function (_dom, _state, content) {
         _dom.serviceNameTxt.val(content.menuName || '');
         Object.keys(_dom.inputTxts).forEach(function (inputId) {
           _dom.inputTxts[inputId].val(content.microserviceInputs && content.microserviceInputs[inputId] && content.microserviceInputs[inputId].value?content.microserviceInputs[inputId].value:'');
         });
-        if(_status.aceEditor)
-          _status.aceEditor.setValue(content.microserviceOutputAdaptAlg || '');
+        if(_state.aceEditor)
+          _state.aceEditor.setValue(content.microserviceOutputAdaptAlg || '');
         else
           throw 'aceEditor not initialized';
       }
     }
   };
 
-  return function (config) {
+  return function (config={}) {
     var mscEndpoint = config.mscEndpoint || '';
     var microserviceId = config.microserviceId || '';
     var operationId = config.operationId || '';
     var forceStartWhenStopped = config.forceStartWhenStopped || true;
     
-    var _status = {
+    var _state = {
       requiredInputs: {},
       aceEditor: null
     };
@@ -301,19 +301,19 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
       callInputJsonPre: $('<pre>'),
       tableTbody: $('<tbody>'),
       testCallBtn: $('<button class="btn btn-primary" type="button">Test a Call</button>').click(function () {
-        Object.keys(_status.requiredInputs).forEach(function (inputId) {
-          _status.requiredInputs[inputId].value = _dom.inputTxts[inputId].val();
+        Object.keys(_state.requiredInputs).forEach(function (inputId) {
+          _state.requiredInputs[inputId].value = _dom.inputTxts[inputId].val();
         });
-        _dom.callInputJsonPre.html(JSON.stringify(_status.requiredInputs, null, 4));
+        _dom.callInputJsonPre.html(JSON.stringify(_state.requiredInputs, null, 4));
         if (forceStartWhenStopped) {
-          _statics.services.callMicroserviceForced(mscEndpoint, microserviceId, operationId, _status.requiredInputs, function (output) {
-            _statics.view.showMSResult(output, _status.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
+          _statics.services.callMicroserviceForced(mscEndpoint, microserviceId, operationId, _state.requiredInputs, function (output) {
+            _statics.view.showMSResult(output, _state.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
           }, function (error) {
             Utils.showError(error, _dom.rootNode);
           });
         } else {
-          _statics.services.callMicroservice(mscEndpoint, microserviceId, operationId, _status.requiredInputs, function (output) {
-            _statics.view.showMSResult(output, _status.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
+          _statics.services.callMicroservice(mscEndpoint, microserviceId, operationId, _state.requiredInputs, function (output) {
+            _statics.view.showMSResult(output, _state.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
           }, function (error) {
             Utils.showError(error, _dom.rootNode);
           });
@@ -322,36 +322,182 @@ olive.newMicroserviceCallConfigUI = (function (Utils, ace) {
       microserviceOutputAdaptAlgDiv: $('<div>')
     };
 
-    _statics.init.initMsInputsDom(_dom, _status, mscEndpoint, microserviceId, operationId);
+    _statics.init.initMsInputsDom(_dom, _state, mscEndpoint, microserviceId, operationId);
 
     return {
       getContent: function () {
-        return _statics.ui.getContent(_dom, _status);
+        return _statics.ui.getContent(_dom, _state);
       },
-      setContent: function (content) {
-        _statics.ui.setContent(_dom, _status, content);
+      setContent: function (content={}) {
+        _statics.ui.setContent(_dom, _state, content);
       },
       render: function () {
         return _statics.ui.render(_dom);
       },
       afterRender: function () {
-        _statics.ui.afterRender(_dom, _status);
+        _statics.ui.afterRender(_dom, _state);
       }
     };
   }
 }(olive.utils, ace));
 
-
 //------------------------------------------------------------------------
-var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
-
-  var _newTableRowModule = function (menuName = '', microserviceId = '', operationId = '', microserviceInputJSON = '{}', microserviceOutputAdaptAlg = '', removeBtnHandlerFn = function () {}, editBtnHandlerFn = function () {}) {
+olive.modules.newTable = (function () {
+  
+  var _newRow = (function () {
+    var _statics = {
+      init: {
+        initDom: function (_dom, fieldList, rowThis) {
+          fieldList.forEach(function (field) {
+            var name = field.name || '';
+            if(name==='') throw 'Table field name required';
+            var type = field.type || 'input'; //or button
+            var text = field.text || name;
+            var iconClass = field.iconClass || '';
+            var style = field.style || '';
+            var fn = field.fn || function () {};
+            if(type==='input')
+              _dom[name] = $('<input type="text" class="form-control">');
+            else
+              _dom[name] = $('<div class="input-group-addon link" style="'+style+'">'+text+'</div>').click(function () {
+                fn(rowThis);
+              });
+            if(iconClass!='')
+              _dom[name].append('<span class="'+iconClass+'"></span>');
+          });
+        }
+      },
+      ui: {
+        render: function (_dom, fieldList) {
+          var root = $('<div class="input-group">');
+          fieldList.forEach(function (field) {
+            if(field.type!=='button')
+              root.append('<span class="input-group-addon">'+(field.text || field.name)+': </span>');
+            root.append(_dom[field.name]);
+          });
+          return root;
+        },
+        getContent: function (_dom, fieldList) {
+          var ret = {};
+          fieldList.forEach(function (field) {
+            if(field.type!=='button')
+              ret[field.name] = _dom[field.name].val();
+          });
+          return ret;
+        },
+        setContent: function (_dom, content) {
+          Object.keys(content).forEach(function (key) {
+            _dom[key].val(content[key]);
+          });
+        }
+      }
+    };
+    return function (config={}) {
+      var fieldList = config.fieldList || [];
+      var _dom = {};
+      
+      var rowThis = {
+        render: function () {
+          return _statics.init.ui.render(_dom, fieldList);
+        },
+        getContent: function () {
+          return _statics.init.ui.getContent(_dom, fieldList);
+        },
+        setContent: function (content={}) {
+          _statics.init.ui.setContent(_dom, content);
+        }
+      };
+      
+      _statics.init.initDom(_dom, fieldList, rowThis);
+      
+      return rowThis;
+    };
+  }());
+  
+  var _statics = {
+    ui: {
+      render: function (_dom) {
+        return $('<table class="table table-condensed table-hover">').append(
+          _dom.rootTbody);
+      },
+      getContent: function (_dom, _sub) {
+        return _sub.rowList.map(function (row) {
+          return row.getContent();
+        });
+      },
+      setContent: function (_dom, _sub, fieldList, rowContentList) {
+        _dom.rootTbody.empty();
+        _sub.rowList = [];
+        rowContentList.forEach(function (rowContent) {
+          _statics.ui.addRow(_dom, _sub, fieldList, rowContent);
+        });
+      },
+      addRow: function (_dom, _sub, fieldList, rowContent) {
+        var tr = $('<tr>');
+        var row = null;
+        var removeRowFn = function () {
+          tr.remove();
+          _sub.rowList.splice(_sub.rowList.indexOf(row), 1);
+        };
+        fieldList.push({
+          name: 'removeRow',
+          type: 'button',
+          text: '&times;',
+          iconClass: '',
+          style: 'font-size:20px;font-weight:700;',
+          fn: removeRowFn
+        });
+        row = _newRow({
+          fieldList: fieldList
+        });
+        row.setContent(rowContent);
+        _sub.rowList.push(row);
+        _dom.rootTbody.append(
+          tr.append(
+            $('<td>').append(
+              row.render())));
+      }
+      
+    }
+  };
+  
+  return function (config={}) {
+    var fieldList = config.fieldList || [];
+    
+    var _sub = {
+      rowList: []
+    };
     var _dom = {
-      menuNameTxt: $('<input type="text" class="form-control">').val(menuName),
-      microserviceIdTxt: $('<input type="text" class="form-control">').val(microserviceId),
-      operationIdTxt: $('<input type="text" class="form-control">').val(operationId),
-      microserviceInputJSONTxt: $('<input type="text" class="form-control">').val(microserviceInputJSON),
-      microserviceOutputAdaptAlgTxt: $('<input type="text" class="form-control">').val(microserviceOutputAdaptAlg),
+      rootTbody: $('<tbody>')
+    };
+    
+    return {
+      render: function () {
+        return _statics.ui.render(_dom);
+      },
+      getContent: function () {
+        return _statics.ui.getContent(_dom, _sub);
+      },
+      setContent: function (contentList=[]) {
+        _statics.ui.setContent(_dom, _sub, fieldList, contentList);
+      },
+      addRow: function (content={}) {
+        _statics.ui.addRow(_dom, _sub, fieldList, content);
+      }
+    };
+  };
+}());
+
+/*
+var newInputTableModule = (function (Utils, newMicroserviceCallConfigUI) {
+
+  var _newTableRowModule = function (removeBtnHandlerFn = function () {}, editBtnHandlerFn = function () {}) {
+    var _dom = {
+      menuNameTxt: $('<input type="text" class="form-control">'),
+      microserviceIdTxt: $('<input type="text" class="form-control">'),
+      operationIdTxt: $('<input type="text" class="form-control">'),
+      microserviceInputJSONTxt: $('<input type="text" class="form-control">'),
+      microserviceOutputAdaptAlgTxt: $('<input type="text" class="form-control">'),
       removeRowBtn: $('<div class="input-group-addon link" style="font-size:20px;font-weight:700;">&times;</div>').click(removeBtnHandlerFn),
       editRowBtn: $('<div class="input-group-addon link"></div>').click(editBtnHandlerFn)
     };
@@ -384,12 +530,12 @@ var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
         };
       },
 
-      setContent: function (data) {
-        _dom.menuNameTxt.val(data.menuName);
-        _dom.microserviceIdTxt.val(data.microserviceId);
-        _dom.operationIdTxt.val(data.operationId);
-        _dom.microserviceInputJSONTxt.val(data.microserviceInputJSON);
-        _dom.microserviceOutputAdaptAlgTxt.val(data.microserviceOutputAdaptAlg);
+      setContent: function (content) {
+        _dom.menuNameTxt.val(content.menuName);
+        _dom.microserviceIdTxt.val(content.microserviceId);
+        _dom.operationIdTxt.val(content.operationId);
+        _dom.microserviceInputJSONTxt.val(content.microserviceInputJSON);
+        _dom.microserviceOutputAdaptAlgTxt.val(content.microserviceOutputAdaptAlg);
       }
     };
   };
@@ -435,13 +581,19 @@ var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
       },
       addRow: function (menuName, microserviceId, operationId, microserviceInputJSON, microserviceOutputAdaptAlg) {
         var tr = $('<tr>');
-        var newRow = _newTableRowModule(menuName, microserviceId, operationId, microserviceInputJSON, microserviceOutputAdaptAlg, function () {
+        var newRow = _newTableRowModule(function () {
             tr.remove();
             _rowModuleList.splice(_rowModuleList.indexOf(newRow), 1);
           }, function () {
             _fns.editRow(newRow);
           });
-
+        newRow.setContent({
+          menuName: menuName,
+          microserviceId: microserviceId,
+          operationId: operationId,
+          microserviceInputJSON: microserviceInputJSON,
+          microserviceOutputAdaptAlg: microserviceOutputAdaptAlg
+        });
         _rowModuleList.push(newRow);
 
         _dom.rootTbody.append(
@@ -499,7 +651,8 @@ var newInputTableModule = (function (newMicroserviceCallConfigUI, Utils) {
       }
     };
   };
-}(olive.newMicroserviceCallConfigUI, olive.utils));
+}(olive.utils, olive.newMicroserviceCallConfigUI));
+*/
 
 /*TEST-START*/
 
@@ -1301,7 +1454,7 @@ var newMSModule = (function (Utils, _newMSDetailsModule, _newMSOperationModule) 
 
 /*TEST-END*/
 
-var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
+var newAdminModule = (function (Utils, newTable, newMicroserviceCallConfigUI, newMSModule) {
 
   var _statics = {
     retrieveAllMicroservices: function (restEndpoint, successCallback, failureCallback) {
@@ -1324,13 +1477,15 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
     }
   };
 
-  return function (config) {
+  return function (config={}) {
 
+    var mscEndpoint = config.mscEndpoint || '';
+    
     var inputTableModule = null;
     var _lastMicroserviceSelectedDetails = null;
 
     var connectors = '';
-    _statics.getAvailableConnectors(config.mscEndpoint, function (data) {
+    _statics.getAvailableConnectors(mscEndpoint, function (data) {
       connectors = data;
     }, function (error) {
       Utils.showError(error, _dom.messageDiv);
@@ -1341,7 +1496,7 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
         _dom.allMicroserviceOperationsSelect.empty().append('<option value="">Select an operation</option>');
         var microserviceId = _dom.allMicroserviceSelect.val();
         if (microserviceId != '') {
-          _statics.retrieveMicroserviceDetails(config.mscEndpoint, microserviceId, function (msDetails) {
+          _statics.retrieveMicroserviceDetails(mscEndpoint, microserviceId, function (msDetails) {
             _lastMicroserviceSelectedDetails = msDetails;
             Object.keys(msDetails.operations).forEach(function (operationId) {
               _dom.allMicroserviceOperationsSelect.append('<option value="' + operationId + '">' + msDetails.operations[operationId].name + '</option>');
@@ -1380,7 +1535,28 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
           if (microserviceId == '' || operationId == '')
             throw 'Select a microservice and an operation';
 
-          inputTableModule.addRowDialog(microserviceId, operationId);
+          var microserviceCallConfigUI = newMicroserviceCallConfigUI({
+            mscEndpoint: mscEndpoint,
+            microserviceId: microserviceId,
+            operationId: operationId,
+            forceStartWhenStopped: true
+          });
+
+          Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Add microservice', function () {
+            return true;
+          }, function () {
+            var content = microserviceCallConfigUI.getContent();
+            inputTableModule.addRow({
+              menuName: content.serviceName,
+              microserviceId: microserviceId,
+              operationId: operationId,
+              microserviceInputJSON: JSON.stringify(content.microserviceInputs),
+              microserviceOutputAdaptAlg: content.microserviceOutputAdaptAlg
+            });            
+          }, function () {
+            microserviceCallConfigUI.afterRender();
+          });
+          
         } catch (error) {
           Utils.showError(error, _dom.messageDiv);
         }
@@ -1388,11 +1564,11 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
 
       demoMicroserviceBtn: $('<button class="btn btn-default" type="button">New Demo</button>').click(function () {
         //window.open(config.mscEndpoint, '_blank').focus();
-        _statics.createDemoMicroserviceConfiguration(config.mscEndpoint, function (data) {
+        _statics.createDemoMicroserviceConfiguration(mscEndpoint, function (data) {
 
           var msModule = newMSModule({
               lang: 'en',
-              mscEndpoint: config.mscEndpoint,
+              mscEndpoint: mscEndpoint,
               connectors: connectors
             });
           msModule.setContent(data);
@@ -1400,7 +1576,7 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
             return true;
           }, function () {
             var msConfig = msModule.getContent();
-            _statics.createMicroservice(config.mscEndpoint, msConfig, function () {
+            _statics.createMicroservice(mscEndpoint, msConfig, function () {
               _fns.loadMicroserviceSelect();
               Utils.showSuccess('Microservice created', _dom.messageDiv);
             }, function (error) {
@@ -1417,14 +1593,14 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
 
         var msModule = newMSModule({
             lang: 'en',
-            mscEndpoint: config.mscEndpoint,
+            mscEndpoint: mscEndpoint,
             connectors: connectors
           });
         Utils.createDialogBootstrap(msModule.render(), 'New microservice', function () {
           return true;
         }, function () {
           var msConfig = msModule.getContent();
-          _statics.createMicroservice(config.mscEndpoint, msConfig, function () {
+          _statics.createMicroservice(mscEndpoint, msConfig, function () {
             _fns.loadMicroserviceSelect();
             Utils.showSuccess('Microservice created', _dom.messageDiv);
           }, function (error) {
@@ -1460,9 +1636,8 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
     };
 
     var _fns = {
-
       loadMicroserviceSelect: function () {
-        _statics.retrieveAllMicroservices(config.mscEndpoint, function (msInfos) {
+        _statics.retrieveAllMicroservices(mscEndpoint, function (msInfos) {
           _dom.allMicroserviceSelect.empty().append('<option value="">Select a Microservice</option>');
           Object.keys(msInfos).forEach(function (microservicesId) {
             _dom.allMicroserviceSelect.append('<option value="' + microservicesId + '">' + msInfos[microservicesId].name + '</option>');
@@ -1474,7 +1649,65 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
       },
 
       initInputTableModule: function () {
-        inputTableModule = newInputTableModule(config.mscEndpoint);
+        inputTableModule = newTable({
+          fieldList: [{
+            name: 'menuName',
+            text: 'Name',
+            type: 'input'
+          }, {
+            name: 'microserviceId',
+            text: 'Microservice ID',
+            type: 'input'
+          }, {
+            name: 'operationId',
+            text: 'Operation ID',
+            type: 'input'
+          }, {
+            name: 'microserviceInputJSON',
+            text: 'Inputs',
+            type: 'input'
+          }, {
+            name: 'microserviceOutputAdaptAlg',
+            text: 'Alg',
+            type: 'input'
+          }, {
+            name: 'editBtn',
+            text: '',
+            type: 'button',
+            style: '',
+            iconClass: 'glyphicon glyphicon-pencil',
+            fn: function (row) {
+              var rowContent = row.getContent();
+              var microserviceCallConfigUI = newMicroserviceCallConfigUI({
+                mscEndpoint: mscEndpoint,
+                microserviceId: rowContent.microserviceId,
+                operationId: rowContent.operationId,
+                forceStartWhenStopped: true
+              });
+              
+              Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Edit microservice details', function () {
+                return true;
+              }, function () {
+                var callConfigUIContent = microserviceCallConfigUI.getContent();
+                row.setContent({
+                  menuName: callConfigUIContent.serviceName,
+                  microserviceId: rowContent.microserviceId,
+                  operationId: rowContent.operationId,
+                  microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
+                  microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
+                });
+              }, function () {
+                microserviceCallConfigUI.afterRender();
+                
+                microserviceCallConfigUI.setContent({
+                  menuName: rowContent.menuName,
+                  microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
+                  microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
+                });
+              });
+            }
+          }]
+        });
         inputTableModule.setContent(config.contentJsonArray);
       },
 
@@ -1504,45 +1737,4 @@ var newAdminModule = (function (Utils, newInputTableModule, newMSModule) {
       }
     };
   };
-}
-  (olive.utils, newInputTableModule, newMSModule));
-
-var MSC2 = (function (Utils, newMSModule) {
-
-  var newMSRow = (function () {
-    return function (config = {}) {
-
-      return {
-        render: function () {
-          return null;
-        }
-
-      };
-    };
-  }
-    ());
-
-  return function (config = {}) {
-
-    var _subs = {};
-
-    var _doms = {
-      msListDiv: $('<div class="list-group">'),
-      addMicroserviceBtn: $('<button class="btn btn-default" type="button">New Microservice</button>').click(function () {})
-    };
-
-    return {
-      render: function () {
-        return $('<div>').append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-3">').append(
-              _doms.addMicroserviceBtn))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              _doms.msListDiv)));
-      },
-      setContent: function (content = {}) {}
-    }
-  };
-}
-  ());
+}(olive.utils, olive.newTable, olive.newMicroserviceCallConfigUI, newMSModule));
