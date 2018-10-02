@@ -831,7 +831,7 @@ var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMS
               _subs.msInputsModule.render()))).append(
           _doms.asyncInputsDiv.append(
             $('<div class="col-lg-12">').append(
-              _subs.msAsyncInputsModule.render())).hide()).append(
+              _subs.msAsyncInputsModule.render()))).append(
           $('<div class="row form-group">').append(
             $('<div class="col-lg-12">').append(
               $('<div class="input-group">').append(
