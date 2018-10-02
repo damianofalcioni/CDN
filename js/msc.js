@@ -1433,3 +1433,128 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
     };
   };
 }(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceCallConfigUI, olive.modules.newMicroserviceDefinitionUI));
+
+
+//------------------------------------------------------------------------
+olive.modules.newMicroserviceViewUI = (function (Utils) {
+
+  var _statics = {
+    services: {
+      callMicroserviceForced: function (restEndpoint, microserviceId, operationId, inputs, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/callMicroserviceForced', 'microserviceId=' + microserviceId + '&operationId=' + operationId, inputs, successCallback, failureCallback);
+      }
+    },
+    init: {
+      loadContent: function (_dom, msConfig, mscEndpoint) {
+        _dom.outputDiv.addClass('loading');
+
+        Utils.callMicroserviceForced(mscEndpoint, msConfig.microserviceId, msConfig.operationId, msConfig.microserviceInputJSON, function (data) {
+          _dom.outputDiv.removeClass('loading');
+
+          var alg = msConfig.microserviceOutputAdaptAlg;
+          if (alg.indexOf('return') === -1) {
+            alg = 'return $("<pre>").append($("<code>").append(JSON.stringify(output, null, 2)));';
+          }
+          try {
+            var algF = new Function('output', alg + '\n//# sourceURL=microservice_custom_alg.js');
+            var domOut = algF(data);
+            _dom.outputDiv.empty().append(domOut);
+          } catch (e) {
+            Utils.showError(e, _dom.messageDiv);
+          }
+
+        }, function (error) {
+          _dom.outputDiv.removeClass('loading');
+          Utils.showError(error, _dom.messageDiv);
+        });
+      }
+    },
+    ui: {
+      render: function (_dom, msConfig) {
+        var menuName = msConfig.menuName || '';
+        return $('<div id="' + menuName.replace(' ', '_') + '" class="panel panel-default">').append(
+          _dom.panelHeader.append(
+            '<h4 class="panel-title">' + menuName + ' <span class="caret"></span></h4>')).append(
+          _dom.panelCollapsable.append(
+            $('<div class="panel-body">').append(
+              _dom.messageDiv).append(
+              _dom.outputDiv)));
+      }
+    }
+  };
+
+  return function (config={}) {
+    var msConfig = config.msConfig || {};
+    var mscEndpoint = config.mscEndpoint || '';
+
+    var _dom = {
+      panelHeader: $('<div class="panel-heading link">').click(function () {
+        _dom.panelCollapsable.collapse('toggle');
+      }),
+      panelCollapsable: $('<div class="panel-collapse">'),
+      messageDiv: $('<div>'),
+      outputDiv: $('<div>')
+    };
+
+    _statics.init.loadContent(_dom, msConfig, mscEndpoint);
+
+    return {
+      render: function () {
+        return _statics.ui.render(_dom, msConfig);
+      }
+    };
+  };
+}(olive.utils));
+
+//------------------------------------------------------------------------
+olive.modules.newOliveViewUI = (function (newMicroserviceViewUI) {
+
+  var _statics = {
+    init: {
+      loadPanels: function (_dom, config) {
+        var showAll = true;
+        config.contentJsonArray.forEach(function (serviceConfig) {
+          if (config.viewName === serviceConfig.menuName)
+            showAll = false;
+        });
+        config.contentJsonArray.forEach(function (serviceConfig) {
+          if (showAll || config.viewName === serviceConfig.menuName) {
+            var singleService = newMicroserviceViewUI({
+                msConfig: serviceConfig,
+                mscEndpoint: config.mscEndpoint
+              });
+            _dom.panelList.push(singleService.render());
+          }
+        });
+      }
+    },
+    ui: {
+      render: function (_dom) {
+        return $('<div>').append(
+          _dom.messageDiv
+        ).append(
+          _dom.panelList);
+      }
+    }
+  };
+
+  return function (config = {}) {
+    config.contentJsonArray = config.contentJsonArray || [];
+    config.viewName = config.viewName || '';
+    config.mscEndpoint = config.mscEndpoint || '';
+    
+    var _dom = {
+      messageDiv: $('<div>'),
+      panelList: []
+    };
+    
+    _statics.init.loadPanels(_dom, config);
+    
+    return {
+      render: function () {
+        return _statics.ui.render(_dom);
+      }
+    };
+  };
+}(olive.modules.newMicroserviceViewUI));
+
