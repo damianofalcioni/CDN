@@ -398,13 +398,13 @@ olive.modules.newTable = (function () {
       
       var rowThis = {
         render: function () {
-          return _statics.init.ui.render(_dom, fieldList);
+          return _statics.ui.render(_dom, fieldList);
         },
         getContent: function () {
-          return _statics.init.ui.getContent(_dom, fieldList);
+          return _statics.ui.getContent(_dom, fieldList);
         },
         setContent: function (content={}) {
-          _statics.init.ui.setContent(_dom, content);
+          _statics.ui.setContent(_dom, content);
         }
       };
       
