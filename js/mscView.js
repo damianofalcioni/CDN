@@ -558,3 +558,57 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
     };
   };
 }(olive.utils));
+
+
+//------------------------------------------------------------------------
+olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
+
+  var _statics = {
+    init: {
+      loadPanels: function (_dom, config) {
+        var showAll = true;
+        config.contentJsonArray.forEach(function (serviceConfig) {
+          if (config.viewName === serviceConfig.menuName)
+            showAll = false;
+        });
+        config.contentJsonArray.forEach(function (serviceConfig) {
+          if (showAll || config.viewName === serviceConfig.menuName) {
+            var singleService = newMicroserviceCallViewUI({
+                msConfig: serviceConfig,
+                mscEndpoint: config.mscEndpoint
+              });
+            _dom.panelList.push(singleService.render());
+          }
+        });
+      }
+    },
+    ui: {
+      render: function (_dom) {
+        return $('<div>').append(
+          _dom.messageDiv
+        ).append(
+          _dom.panelList);
+      }
+    }
+  };
+
+  return function (config = {}) {
+    config.contentJsonArray = config.contentJsonArray || [];
+    config.viewName = config.viewName || '';
+    config.mscEndpoint = config.mscEndpoint || '';
+    
+    var _dom = {
+      messageDiv: $('<div>'),
+      panelList: []
+    };
+    
+    _statics.init.loadPanels(_dom, config);
+    
+    return {
+      render: function () {
+        return _statics.ui.render(_dom);
+      }
+    };
+  };
+}(olive.modules.newMicroserviceCallViewUI));
+
