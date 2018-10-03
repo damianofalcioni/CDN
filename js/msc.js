@@ -1503,7 +1503,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
       render: function () {
         return $('<div>').append(
           $('<div class="input-group">').append(
-            '<span class="input-group-addon">Select a public Microservice</span>').append(
+            '<span class="input-group-addon">Public available Microservices: </span>').append(
             _dom.allMicroserviceSelect).append(
             '<span class="input-group-addon"></span>').append(
             _dom.allMicroserviceOperationsSelect).append(
