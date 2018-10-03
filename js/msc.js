@@ -1294,7 +1294,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
         trigger: 'hover'
       }),
 
-      addMicroserviceBtn: $('<button class="btn btn-default" type="button">Add</button>').click(function () {
+      addMicroserviceBtn: $('<button class="btn btn-default" type="button">Add to View</button>').click(function () {
         try {
           var microserviceId = _dom.allMicroserviceSelect.val();
           var operationId = _dom.allMicroserviceOperationsSelect.val();
@@ -1342,8 +1342,15 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
             return true;
           }, function () {
             var msConfig = msModule.getContent();
-            _statics.createMicroservice(mscEndpoint, msConfig, function () {
+            _statics.createMicroservice(mscEndpoint, msConfig, function (createMicroserviceReturnData) {
               _fns.loadMicroserviceSelect();
+              inputTableModule.addRow({
+                menuName: msConfig.name,
+                microserviceId: createMicroserviceReturnData.microserviceId,
+                operationId: msConfig.defaultOperationId,
+                microserviceInputJSON: '{}',
+                microserviceOutputAdaptAlg: ''
+              });
               Utils.showSuccess('Microservice created', _dom.messageDiv);
             }, function (error) {
               Utils.showError(error, _dom.messageDiv);
@@ -1366,8 +1373,15 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
           return true;
         }, function () {
           var msConfig = msModule.getContent();
-          _statics.createMicroservice(mscEndpoint, msConfig, function () {
+          _statics.createMicroservice(mscEndpoint, msConfig, function (createMicroserviceReturnData) {
             _fns.loadMicroserviceSelect();
+            inputTableModule.addRow({
+              menuName: msConfig.name,
+              microserviceId: createMicroserviceReturnData.microserviceId,
+              operationId: msConfig.defaultOperationId,
+              microserviceInputJSON: '{}',
+              microserviceOutputAdaptAlg: ''
+            });
             Utils.showSuccess('Microservice created', _dom.messageDiv);
           }, function (error) {
             Utils.showError(error, _dom.messageDiv);
@@ -1496,7 +1510,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
             $('<span class="input-group-btn">').append(
               _dom.addMicroserviceBtn).append(
               _dom.newMicroserviceBtn).append(
-              _dom.demoMicroserviceBtn))).append('<br>').append(
+              _dom.demoMicroserviceBtn))).append('<br><h4>Microservices to Visualize:</h4><br>').append(
           inputTableModule.render()).append('<br>').append(
           _dom.saveBtn).append(
           _dom.messageDiv);
