@@ -1328,9 +1328,9 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
         }
       }),
 
-      demoMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New (Demo)</button>').click(function () {
+      demoMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New</button>').click(function () {
         //window.open(config.mscEndpoint, '_blank').focus();
-        _statics.createDemoMicroserviceConfiguration(mscEndpoint, function (data) {
+        _statics.createEmptyMicroserviceConfiguration(mscEndpoint, function (data) {
 
           var msModule = newMicroserviceDefinitionUI({
               lang: 'en',
@@ -1509,7 +1509,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
             _dom.allMicroserviceOperationsSelect).append(
             $('<span class="input-group-btn">').append(
               _dom.addMicroserviceBtn).append(
-              _dom.newMicroserviceBtn).append(
+              //_dom.newMicroserviceBtn).append(
               _dom.demoMicroserviceBtn))).append('<br><h4>Microservices to Visualize:</h4><br>').append(
           inputTableModule.render()).append('<br>').append(
           _dom.saveBtn).append(
