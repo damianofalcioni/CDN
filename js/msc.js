@@ -1394,9 +1394,9 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         placement: 'auto left',
         container: 'body',
         html: true,
-        title: 'Description ' + _state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
+        title: 'Description ' + _state.lastMicroserviceSelectedDetails!=null && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
         content: function () {
-          return (_state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.description) ? _state.lastMicroserviceSelectedDetails.description : 'No microservice selected';
+          return (_state.lastMicroserviceSelectedDetails!=null && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.description) ? _state.lastMicroserviceSelectedDetails.description : 'No microservice selected';
         },
         trigger: 'hover'
       }),
@@ -1406,9 +1406,9 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         placement: 'auto left',
         container: 'body',
         html: true,
-        title: 'Description ' + _state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.allMicroserviceSelect.val() && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
+        title: 'Description ' + _state.lastMicroserviceSelectedDetails!=null && _state.lastMicroserviceSelectedDetails.id === _dom.allMicroserviceSelect.val() && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
         content: function () {
-          return (_state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.allMicroserviceSelect.val() && _state.lastMicroserviceSelectedDetails.description) ? _state.lastMicroserviceSelectedDetails.description : 'No microservice selected';
+          return (_state.lastMicroserviceSelectedDetails!=null && _state.lastMicroserviceSelectedDetails.id === _dom.allMicroserviceSelect.val() && _state.lastMicroserviceSelectedDetails.description) ? _state.lastMicroserviceSelectedDetails.description : 'No microservice selected';
         },
         trigger: 'hover'
       }),
@@ -1418,7 +1418,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         html: true,
         title: 'Description',
         content: function () {
-          return (_state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.operations && _state.lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()]) ? _state.lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()].description : 'No operation selected';
+          return (_state.lastMicroserviceSelectedDetails!=null && _state.lastMicroserviceSelectedDetails.operations!=null && _state.lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()]) ? _state.lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()].description : 'No operation selected';
         },
         trigger: 'hover'
       }),
