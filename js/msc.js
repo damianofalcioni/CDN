@@ -1563,7 +1563,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
     ui: {
       render: function (_dom, _sub) {
         return $('<div>').append(
-          _sub.msManagementInlineUI.render()).append(
+          _sub.msManagementInlineModule.render()).append(
           '<br><h4>Microservices to Visualize:</h4><br>').append(
           _sub.inputTableModule.render()).append('<br>').append(
           _dom.saveBtn).append(
