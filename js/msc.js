@@ -1534,7 +1534,11 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
             iconClass: 'glyphicon glyphicon-pencil',
             fn: function (row) {
               var rowContent = row.getContent();
-              newMicroserviceManagementInlineUI.showMicroserviceCallUI(_dom, config, rowContent.microserviceId, rowContent.operationId, rowContent, function (callConfigUIContent, microserviceId, operationId) {
+              newMicroserviceManagementInlineUI.showMicroserviceCallUI(_dom, config, rowContent.microserviceId, rowContent.operationId, {
+                menuName: rowContent.rowContent,
+                microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
+                microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
+              }, function (callConfigUIContent, microserviceId, operationId) {
                 row.setContent({
                   menuName: callConfigUIContent.serviceName,
                   microserviceId: microserviceId,
