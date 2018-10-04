@@ -1219,51 +1219,55 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
 
 }(olive.utils, olive.modules.newTable));
 
+
+
+
 //------------------------------------------------------------------------
-olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallConfigUI, newMicroserviceDefinitionUI) {
-
+olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, newMicroserviceCallConfigUI, newMicroserviceDefinitionUI) {
   var _statics = {
-    retrieveAllMicroservices: function (restEndpoint, successCallback, failureCallback) {
-      Utils.callService(restEndpoint + 'msc/retrieveAllMicroservices', null, null, successCallback, failureCallback);
+    services: {
+      retrieveAllMicroservices: function (restEndpoint, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/retrieveAllMicroservices', null, null, successCallback, failureCallback);
+      },
+      retrieveMicroserviceDetails: function (restEndpoint, microserviceId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/retrieveMicroserviceDetails', 'microserviceId=' + microserviceId, null, function (data) {
+          data.id = microserviceId;
+          successCallback(data);
+        }, failureCallback);
+      },
+      createMicroservice: function (restEndpoint, microserviceConfiguration, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/createMicroservice', null, JSON.stringify(microserviceConfiguration), successCallback, failureCallback);
+      },
+      updateMicroservice: function (restEndpoint, microserviceId, microserviceConfiguration, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/updateMicroservice', 'microserviceId=' + microserviceId, JSON.stringify(microserviceConfiguration), successCallback, failureCallback);
+      },
+      getAvailableConnectors: function (restEndpoint, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/getAvailableConnectors', null, null, successCallback, failureCallback);
+      },
+      createDemoMicroserviceConfiguration: function (restEndpoint, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/createDemoMicroserviceConfiguration', null, null, successCallback, failureCallback);
+      },
+      createEmptyMicroserviceConfiguration: function (restEndpoint, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/createEmptyMicroserviceConfiguration', null, null, successCallback, failureCallback);
+      }
     },
-    retrieveMicroserviceDetails: function (restEndpoint, microserviceId, successCallback, failureCallback) {
-      Utils.callService(restEndpoint + 'msc/retrieveMicroserviceDetails', 'microserviceId=' + microserviceId, null, successCallback, failureCallback);
-    },
-    createMicroservice: function (restEndpoint, microserviceConfiguration, successCallback, failureCallback) {
-      Utils.callService(restEndpoint + 'msc/createMicroservice', null, JSON.stringify(microserviceConfiguration), successCallback, failureCallback);
-    },
-    getAvailableConnectors: function (restEndpoint, successCallback, failureCallback) {
-      Utils.callService(restEndpoint + 'msc/getAvailableConnectors', null, null, successCallback, failureCallback);
-    },
-    createDemoMicroserviceConfiguration: function (restEndpoint, successCallback, failureCallback) {
-      Utils.callService(restEndpoint + 'msc/createDemoMicroserviceConfiguration', null, null, successCallback, failureCallback);
-    },
-    createEmptyMicroserviceConfiguration: function (restEndpoint, successCallback, failureCallback) {
-      Utils.callService(restEndpoint + 'msc/createEmptyMicroserviceConfiguration', null, null, successCallback, failureCallback);
-    }
-  };
-
-  return function (config={}) {
-
-    var mscEndpoint = config.mscEndpoint || '';
-    
-    var inputTableModule = null;
-    var _lastMicroserviceSelectedDetails = null;
-
-    var connectors = '';
-    _statics.getAvailableConnectors(mscEndpoint, function (data) {
-      connectors = data;
-    }, function (error) {
-      Utils.showError(error, _dom.messageDiv);
-    });
-
-    var _dom = {
-      allMicroserviceSelect: $('<select class="form-control">').change(function () {
+    init: {
+      initMicroserviceSelect: function (_dom, _state, config) {
+        _statics.services.retrieveAllMicroservices(config.mscEndpoint, function (msInfos) {
+          _dom.allMicroserviceSelect.empty().append('<option value="">Select a public Microservice</option>');
+          Object.keys(msInfos).forEach(function (microservicesId) {
+            _dom.allMicroserviceSelect.append('<option value="' + microservicesId + '">' + msInfos[microservicesId].name + '</option>');
+          });
+          _dom.allMicroserviceSelect.trigger('change');
+        }, function (error) {
+          Utils.showError(error, _dom.messageDiv);
+        });
+      },
+      initOperationsSelect: function (_dom, _state, config, microserviceId) {
         _dom.allMicroserviceOperationsSelect.empty().append('<option value="">Select an operation</option>');
-        var microserviceId = _dom.allMicroserviceSelect.val();
         if (microserviceId != '') {
-          _statics.retrieveMicroserviceDetails(mscEndpoint, microserviceId, function (msDetails) {
-            _lastMicroserviceSelectedDetails = msDetails;
+          _statics.services.retrieveMicroserviceDetails(config.mscEndpoint, microserviceId, function (msDetails) {
+            _state.lastMicroserviceSelectedDetails = msDetails;
             Object.keys(msDetails.operations).forEach(function (operationId) {
               _dom.allMicroserviceOperationsSelect.append('<option value="' + operationId + '">' + msDetails.operations[operationId].name + '</option>');
             });
@@ -1272,126 +1276,205 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
           });
         }
         _dom.allMicroserviceOperationsSelect.trigger('change');
+      },
+      initConnectors: function (_dom, _state, config) {
+        _statics.services.getAvailableConnectors(config.mscEndpoint, function (data) {
+          _state.connectors = data;
+        }, function (error) {
+          Utils.showError(error, _dom.messageDiv);
+        });
+      },
+      
+      initMain: function (_dom, _state, config) {
+        _statics.init.initConnectors(_dom, _state, config);
+        _statics.init.initMicroserviceSelect(_dom, _state, config);
+      }
+    },
+    msManagement: {
+      createMicroservice: function (_dom, _state, config, msConfiguration) {
+        _statics.services.createMicroservice(config.mscEndpoint, msConfiguration, function (createMicroserviceReturnData) {
+          _statics.init.initMicroserviceSelect(_dom, _state, config);
+          _dom.microserviceIdTxt.val(createMicroserviceReturnData.microserviceId).trigger('change');
+          Utils.showSuccess('Microservice created', _dom.messageDiv);
+        }, function (error) {
+          Utils.showError(error, _dom.messageDiv);
+        });
+      },
+      updateMicroservice: function (_dom, _state, config, microserviceId, msConfiguration) {
+        if(microserviceId != '') {
+          _statics.services.updateMicroservice(config.mscEndpoint, microserviceId, msConfiguration, function () {
+            _statics.init.initMicroserviceSelect(_dom, _state, config);
+            _dom.microserviceIdTxt.val(microserviceId).trigger('change');
+            Utils.showSuccess('Microservice updated', _dom.messageDiv);
+          }, function (error) {
+            Utils.showError(error, _dom.messageDiv);
+          });
+        }
+      },
+      showMicroserviceDefinitionUI: function (_dom, config, _state, msDefinition, okHandlerFn) {
+        try {
+          if(!_state.connectors) throw 'connectors not initialized';
+          var msModule = newMicroserviceDefinitionUI({
+            lang: 'en',
+            mscEndpoint: config.mscEndpoint,
+            connectors: _state.connectors
+          });
+          msModule.setContent(msDefinition);
+          
+          Utils.createDialogBootstrap(msModule.render(), 'Microservice Definition', function () {
+            return true;
+          }, function () {
+            okHandlerFn(msModule.getContent());
+          }, function () {});
+        }catch(e) {
+          Utils.showError(e, _dom.messageDiv);
+        }
+      },
+      showMicroserviceCallUI: function (_dom, config, microserviceId, operationId, content, okHandlerFn) {
+        try {
+          if (microserviceId == '' || operationId == '') throw 'Select a microservice and an operation first';
+          var microserviceCallConfigUI = newMicroserviceCallConfigUI({
+            mscEndpoint: config.mscEndpoint,
+            microserviceId: microserviceId,
+            operationId: operationId,
+            forceStartWhenStopped: true
+          });
+          
+          Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Call Microservice', function () {
+            return true;
+          }, function () {
+            okHandlerFn(microserviceCallConfigUI.getContent(), microserviceId, operationId);
+          }, function () {
+            microserviceCallConfigUI.afterRender();
+            microserviceCallConfigUI.setContent(content);
+          });
+        }catch(e) {
+          Utils.showError(e, _dom.messageDiv);
+        }
+      }
+    },
+    ui: {
+      render: function (_dom) {
+        return $('<div>').append(
+          $('<div class="input-group">').append(
+            '<span class="input-group-addon">Microservice ID:</span>').append(
+            _dom.microserviceIdTxt).append(
+            '<span class="input-group-addon">or</span>').append(
+            _dom.allMicroserviceSelect).append(
+            $('<span class="input-group-btn">').append(
+              _dom.editMicroserviceBtn).append(
+              _dom.newEmptyMicroserviceBtn)).append(
+            _dom.allMicroserviceOperationsSelect).append(
+            $('<span class="input-group-btn">').append(
+              _dom.callMicroserviceBtn))).append(
+          _dom.messageDiv);
+    }
+  };
+
+  var functionRet = function (config={}) {
+    config.mscEndpoint = config.mscEndpoint || '';
+    config.callConfigHandlerFn = config.callConfigHandlerFn || function (callConfig) {};
+    
+    var _state = {
+      lastMicroserviceSelectedDetails: null,
+      connectors: ''
+    };
+
+    var _dom = {
+      microserviceIdTxt: $('<input type="text" class="form-control">').change(function () {
+        _statics.init.initOperationsSelect(_dom, _state, config, _dom.microserviceIdTxt.val());
+        _dom.allMicroserviceSelect.val('');
+      }).keypress(function (e) {
+        if(e.which == 13) {  // the enter key code
+          _statics.init.initOperationsSelect(_dom, _state, config, _dom.microserviceIdTxt.val());
+          _dom.allMicroserviceSelect.val('');
+        }
       }).popover({
         placement: 'auto left',
         container: 'body',
         html: true,
-        title: 'Description',
+        title: 'Description ' + _state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
         content: function () {
-          return (_lastMicroserviceSelectedDetails && _lastMicroserviceSelectedDetails.description) ? _lastMicroserviceSelectedDetails.description : 'No microservice selected';
+          return (_state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.description) ? _state.lastMicroserviceSelectedDetails.description : 'No microservice selected';
         },
         trigger: 'hover'
       }),
-
+      allMicroserviceSelect: $('<select class="form-control">').change(function () {
+        _statics.init.initOperationsSelect(_dom, _state, config, _dom.allMicroserviceSelect.val());
+      }).popover({
+        placement: 'auto left',
+        container: 'body',
+        html: true,
+        title: 'Description ' + _state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.allMicroserviceSelect.val() && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
+        content: function () {
+          return (_state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.id === _dom.allMicroserviceSelect.val() && _state.lastMicroserviceSelectedDetails.description) ? _state.lastMicroserviceSelectedDetails.description : 'No microservice selected';
+        },
+        trigger: 'hover'
+      }),
       allMicroserviceOperationsSelect: $('<select class="form-control">').popover({
         placement: 'auto left',
         container: 'body',
         html: true,
         title: 'Description',
         content: function () {
-          return (_lastMicroserviceSelectedDetails && _lastMicroserviceSelectedDetails.operations && _lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()]) ? _lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()].description : 'No operation selected';
+          return (_state.lastMicroserviceSelectedDetails && _state.lastMicroserviceSelectedDetails.operations && _state.lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()]) ? _state.lastMicroserviceSelectedDetails.operations[_dom.allMicroserviceOperationsSelect.val()].description : 'No operation selected';
         },
         trigger: 'hover'
       }),
-
-      addMicroserviceBtn: $('<button class="btn btn-default" type="button">Add to View</button>').click(function () {
-        try {
-          var microserviceId = _dom.allMicroserviceSelect.val();
-          var operationId = _dom.allMicroserviceOperationsSelect.val();
-          if (microserviceId == '' || operationId == '')
-            throw 'Select a microservice and an operation';
-
-          var microserviceCallConfigUI = newMicroserviceCallConfigUI({
-            mscEndpoint: mscEndpoint,
-            microserviceId: microserviceId,
-            operationId: operationId,
-            forceStartWhenStopped: true
+      newEmptyMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New</button>').click(function () {
+        _statics.services.createEmptyMicroserviceConfiguration(config.mscEndpoint, function (msDefinition) {
+          _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
+            _statics.msManagement.createMicroservice(_dom, _state, config, msDefinitionOut);
           });
-
-          Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Add microservice', function () {
-            return true;
-          }, function () {
-            var content = microserviceCallConfigUI.getContent();
-            inputTableModule.addRow({
-              menuName: content.serviceName,
-              microserviceId: microserviceId,
-              operationId: operationId,
-              microserviceInputJSON: JSON.stringify(content.microserviceInputs),
-              microserviceOutputAdaptAlg: content.microserviceOutputAdaptAlg
-            });            
-          }, function () {
-            microserviceCallConfigUI.afterRender();
-          });
-          
-        } catch (error) {
-          Utils.showError(error, _dom.messageDiv);
-        }
-      }),
-
-      demoMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New</button>').click(function () {
-        //window.open(config.mscEndpoint, '_blank').focus();
-        _statics.createEmptyMicroserviceConfiguration(mscEndpoint, function (data) {
-
-          var msModule = newMicroserviceDefinitionUI({
-              lang: 'en',
-              mscEndpoint: mscEndpoint,
-              connectors: connectors
-            });
-          msModule.setContent(data);
-          Utils.createDialogBootstrap(msModule.render(), 'New microservice', function () {
-            return true;
-          }, function () {
-            var msConfig = msModule.getContent();
-            _statics.createMicroservice(mscEndpoint, msConfig, function (createMicroserviceReturnData) {
-              _fns.loadMicroserviceSelect();
-              inputTableModule.addRow({
-                menuName: msConfig.name,
-                microserviceId: createMicroserviceReturnData.microserviceId,
-                operationId: msConfig.defaultOperationId,
-                microserviceInputJSON: '{}',
-                microserviceOutputAdaptAlg: ''
-              });
-              Utils.showSuccess('Microservice created', _dom.messageDiv);
-            }, function (error) {
-              Utils.showError(error, _dom.messageDiv);
-            });
-          }, function () {});
-
         }, function (error) {
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-
-      newMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New</button>').click(function () {
-
-        var msModule = newMicroserviceDefinitionUI({
-            lang: 'en',
-            mscEndpoint: mscEndpoint,
-            connectors: connectors
-          });
-        Utils.createDialogBootstrap(msModule.render(), 'New microservice', function () {
-          return true;
-        }, function () {
-          var msConfig = msModule.getContent();
-          _statics.createMicroservice(mscEndpoint, msConfig, function (createMicroserviceReturnData) {
-            _fns.loadMicroserviceSelect();
-            inputTableModule.addRow({
-              menuName: msConfig.name,
-              microserviceId: createMicroserviceReturnData.microserviceId,
-              operationId: msConfig.defaultOperationId,
-              microserviceInputJSON: '{}',
-              microserviceOutputAdaptAlg: ''
-            });
-            Utils.showSuccess('Microservice created', _dom.messageDiv);
-          }, function (error) {
-            Utils.showError(error, _dom.messageDiv);
-          });
-        }, function () {});
-
+      editMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New</button>').click(function () {
+        var microserviceId = _dom.allMicroserviceSelect.val();
+        if(microserviceId === '')
+          microserviceId = _dom.microserviceIdTxt.val();
+        if(microserviceId === '')
+          return;
+        _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
+          _statics.msManagement.updateMicroservice(_dom, _state, config, microserviceId, msDefinitionOut);
+        });
       }),
+      callMicroserviceBtn: $('<button class="btn btn-default" type="button">Add to View</button>').click(function () {
+        var microserviceId = _dom.allMicroserviceSelect.val();
+        if(microserviceId === '')
+          microserviceId = _dom.microserviceIdTxt.val();
+        var operationId = _dom.allMicroserviceOperationsSelect.val();
+        _statics.msManagement.showMicroserviceCallUI(_dom, config, microserviceId, operationId, {}, function (msCallConfig, microserviceId, operationId) {
+          config.callConfigHandlerFn(msCallConfig, microserviceId, operationId);
+        });
+      }),
+      messageDiv: $('<div>')
+    };
 
-      saveBtn: $('<button class="btn btn-default" type="button">Save</button>').click(function () {
-        var config = inputTableModule.getContent();
+    _statics.init.initMain(_dom, _state, config);
+
+    return {
+      render: function () {
+        return _statics.ui.render(_dom);
+      }
+    };
+  };
+  
+  //Statics Methods
+  functionRet.showMicroserviceCallUI = _statics.msManagement.showMicroserviceCallUI;
+  
+  return functionRet;
+}(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceCallConfigUI, olive.modules.newMicroserviceDefinitionUI));
+
+
+
+//------------------------------------------------------------------------
+olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManagementInlineUI) {
+
+  var _statics = {
+    services: {
+      saveOliveConfig: function (_dom, config) {
         $.ajax({
           type: 'POST',
           url: document.location.href + '&save=true',
@@ -1410,26 +1493,11 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
             console.log('error: ' + error);
           }
         });
-      }),
-
-      messageDiv: $('<div>')
-    };
-
-    var _fns = {
-      loadMicroserviceSelect: function () {
-        _statics.retrieveAllMicroservices(mscEndpoint, function (msInfos) {
-          _dom.allMicroserviceSelect.empty().append('<option value="">Select a Microservice</option>');
-          Object.keys(msInfos).forEach(function (microservicesId) {
-            _dom.allMicroserviceSelect.append('<option value="' + microservicesId + '">' + msInfos[microservicesId].name + '</option>');
-          });
-          _dom.allMicroserviceSelect.trigger('change');
-        }, function (error) {
-          Utils.showError(error, _dom.messageDiv);
-        });
-      },
-
-      initInputTableModule: function () {
-        inputTableModule = newTable({
+      }
+    },
+    init: {
+      initInputTableModule: function (_dom, _sub, config) {
+        _sub.inputTableModule = newTable({
           fieldList: [{
             name: 'menuName',
             text: 'Name',
@@ -1458,66 +1526,77 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceCallC
             iconClass: 'glyphicon glyphicon-pencil',
             fn: function (row) {
               var rowContent = row.getContent();
-              var microserviceCallConfigUI = newMicroserviceCallConfigUI({
-                mscEndpoint: mscEndpoint,
-                microserviceId: rowContent.microserviceId,
-                operationId: rowContent.operationId,
-                forceStartWhenStopped: true
-              });
-              
-              Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Edit microservice details', function () {
-                return true;
-              }, function () {
-                var callConfigUIContent = microserviceCallConfigUI.getContent();
+              newMicroserviceManagementInlineUI.showMicroserviceCallUI(_dom, config, rowContent.microserviceId, rowContent.operationId, rowContent, function (callConfigUIContent, microserviceId, operationId) {
                 row.setContent({
                   menuName: callConfigUIContent.serviceName,
-                  microserviceId: rowContent.microserviceId,
-                  operationId: rowContent.operationId,
+                  microserviceId: microserviceId,
+                  operationId: operationId,
                   microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
                   microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
-                });
-              }, function () {
-                microserviceCallConfigUI.afterRender();
-                
-                microserviceCallConfigUI.setContent({
-                  menuName: rowContent.menuName,
-                  microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
-                  microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
                 });
               });
             }
           }]
         });
-        inputTableModule.setContent(config.contentJsonArray);
+        _sub.inputTableModule.setContent(config.contentJsonArray);
       },
-
-      init: function () {
-        _fns.initInputTableModule();
-        _fns.loadMicroserviceSelect();
+      initMsManagementInlineModule: function (_sub, config) {
+        _sub.msManagementInlineModule = newMicroserviceManagementInlineUI({
+          mscEndpoint: config.mscEndpoint,
+          callConfigHandlerFn: function (callConfigUIContent, microserviceId, operationId) {
+            _sub.inputTableModule.addRow({
+              menuName: callConfigUIContent.serviceName,
+              microserviceId: microserviceId,
+              operationId: operationId,
+              microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
+              microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
+            });
+          }
+        });
+      },
+      initMain: function (_dom, _sub, config) {
+        _statics.init.initInputTableModule(_dom, _sub, config);
+        _statics.init.initMsManagementInlineModule(_sub, config);
       }
-    };
-
-    _fns.init();
-
-    return {
-      render: function () {
+    },
+    ui: {
+      render: function (_dom, _sub) {
         return $('<div>').append(
-          $('<div class="input-group">').append(
-            '<span class="input-group-addon">Public available Microservices: </span>').append(
-            _dom.allMicroserviceSelect).append(
-            '<span class="input-group-addon"></span>').append(
-            _dom.allMicroserviceOperationsSelect).append(
-            $('<span class="input-group-btn">').append(
-              _dom.addMicroserviceBtn).append(
-              //_dom.newMicroserviceBtn).append(
-              _dom.demoMicroserviceBtn))).append('<br><h4>Microservices to Visualize:</h4><br>').append(
-          inputTableModule.render()).append('<br>').append(
+          _sub.msManagementInlineUI.render()).append(
+          '<br><h4>Microservices to Visualize:</h4><br>').append(
+          _sub.inputTableModule.render()).append('<br>').append(
           _dom.saveBtn).append(
           _dom.messageDiv);
       }
+    }
+  };
+
+  return function (config={}) {
+    config.mscEndpoint = config.mscEndpoint || '';
+    config.contentJsonArray = config.contentJsonArray || [];
+    
+    var _sub = {
+      msManagementInlineModule: null,
+      inputTableModule: null
+    };
+
+    var _dom = {
+      saveBtn: $('<button class="btn btn-default" type="button">Save</button>').click(function () {
+        var config = _sub.inputTableModule.getContent();
+        _statics.services.saveOliveConfig(_dom, config);
+      }),
+      messageDiv: $('<div>')
+    };
+
+    _statics.init.initMain(_dom, _sub, config);
+
+    return {
+      render: function () {
+        return _statics.ui.render(_dom, _sub);
+      }
     };
   };
-}(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceCallConfigUI, olive.modules.newMicroserviceDefinitionUI));
+}(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceManagementInlineUI));
 
 //------------------------------------------------------------------------
 olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
