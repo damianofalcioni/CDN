@@ -1235,6 +1235,9 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           successCallback(data);
         }, failureCallback);
       },
+      retrieveMicroserviceConfiguration: function (restEndpoint, microserviceId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/retrieveMicroserviceConfiguration', 'microserviceId=' + microserviceId, null, successCallback, failureCallback);
+      },
       createMicroservice: function (restEndpoint, microserviceConfiguration, successCallback, failureCallback) {
         Utils.callService(restEndpoint + 'msc/createMicroservice', null, JSON.stringify(microserviceConfiguration), successCallback, failureCallback);
       },
@@ -1422,7 +1425,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         },
         trigger: 'hover'
       }),
-      newEmptyMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New</button>').click(function () {
+      newEmptyMicroserviceBtn: $('<button class="btn btn-default" type="button">New</button>').click(function () {
         _statics.services.createEmptyMicroserviceConfiguration(config.mscEndpoint, function (msDefinition) {
           _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
             _statics.msManagement.createMicroservice(_dom, _state, config, msDefinitionOut);
@@ -1431,14 +1434,18 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-      editMicroserviceBtn: $('<button class="btn btn-default" type="button">Create New</button>').click(function () {
+      editMicroserviceBtn: $('<button class="btn btn-default" type="button">Edit</button>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
         if(microserviceId === '')
           return;
-        _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
-          _statics.msManagement.updateMicroservice(_dom, _state, config, microserviceId, msDefinitionOut);
+        _statics.services.retrieveMicroserviceConfiguration(config.mscEndpoint, microserviceId, function (msDefinition) {
+          _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
+            _statics.msManagement.updateMicroservice(_dom, _state, config, microserviceId, msDefinitionOut);
+          });
+        }, function (error) {
+          Utils.showError(error, _dom.messageDiv);
         });
       }),
       callMicroserviceBtn: $('<button class="btn btn-default" type="button">Add to View</button>').click(function () {
