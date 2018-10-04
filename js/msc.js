@@ -1394,7 +1394,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         placement: 'auto left',
         container: 'body',
         html: true,
-        title: 'Description ' + _state.lastMicroserviceSelectedDetails!=null && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
+        title: 'Description ' + _state.lastMicroserviceSelectedDetails!=null && (_state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val()) && _state.lastMicroserviceSelectedDetails.name?_state.lastMicroserviceSelectedDetails.name:'',
         content: function () {
           return (_state.lastMicroserviceSelectedDetails!=null && _state.lastMicroserviceSelectedDetails.id === _dom.microserviceIdTxt.val() && _state.lastMicroserviceSelectedDetails.description) ? _state.lastMicroserviceSelectedDetails.description : 'No microservice selected';
         },
