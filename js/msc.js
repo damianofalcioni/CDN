@@ -1368,6 +1368,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             $('<span class="input-group-btn">').append(
               _dom.callMicroserviceBtn))).append(
           _dom.messageDiv);
+      }
     }
   };
 
