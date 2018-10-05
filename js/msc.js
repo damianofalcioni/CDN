@@ -1244,6 +1244,9 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
       updateMicroservice: function (restEndpoint, microserviceId, microserviceConfiguration, successCallback, failureCallback) {
         Utils.callService(restEndpoint + 'msc/updateMicroservice', 'microserviceId=' + microserviceId, JSON.stringify(microserviceConfiguration), successCallback, failureCallback);
       },
+      deleteMicroservice: function (restEndpoint, microserviceId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/deleteMicroservice', 'microserviceId=' + microserviceId, null, successCallback, failureCallback);
+      },
       getAvailableConnectors: function (restEndpoint, successCallback, failureCallback) {
         Utils.callService(restEndpoint + 'msc/getAvailableConnectors', null, null, successCallback, failureCallback);
       },
@@ -1314,6 +1317,17 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           });
         }
       },
+      deleteMicroservice: function (_dom, _state, config, microserviceId) {
+        if(microserviceId != '') {
+          _statics.services.deleteMicroservice(config.mscEndpoint, microserviceId, function () {
+            _statics.init.initMicroserviceSelect(_dom, _state, config);
+            _dom.microserviceIdTxt.val(microserviceId).trigger('change');
+            Utils.showSuccess('Microservice deleted', _dom.messageDiv);
+          }, function (error) {
+            Utils.showError(error, _dom.messageDiv);
+          });
+        }
+      },
       showMicroserviceDefinitionUI: function (_dom, config, _state, msDefinition, okHandlerFn) {
         try {
           if(!_state.connectors) throw 'connectors not initialized';
@@ -1364,31 +1378,13 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             _dom.microserviceIdTxt).append(
             '<span class="input-group-addon">or</span>').append(
             _dom.allMicroserviceSelect).append(
-            $('<span class="input-group-addon link" data-toggle="dropdown">').append(
-              $('<span class="dropdown-toggle" >').append(
-                $('<span class="caret">'))).append(
-              $('<ul class="dropdown-menu">').append(
-                $('<li>').append(
-                  _dom.editMicroserviceBtn)).append(
-                $('<li>').append(
-                  _dom.newEmptyMicroserviceBtn)))).append(
-            _dom.allMicroserviceOperationsSelect).append(
-              _dom.callMicroserviceBtn)).append(
-          _dom.messageDiv);
-          
-          /*
-          $('<div>').append(
-          $('<div class="input-group">').append(
-            '<span class="input-group-addon">ID:</span>').append(
-            _dom.microserviceIdTxt).append(
-            '<span class="input-group-addon">or</span>').append(
-            _dom.allMicroserviceSelect).append(
+            _dom.deleteMicroserviceBtn).append(
             _dom.editMicroserviceBtn).append(
             _dom.newEmptyMicroserviceBtn).append(
             _dom.allMicroserviceOperationsSelect).append(
               _dom.callMicroserviceBtn)).append(
           _dom.messageDiv);
-          */
+          
       }
     }
   };
@@ -1466,6 +1462,12 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         }, function (error) {
           Utils.showError(error, _dom.messageDiv);
         });
+      }),
+      deleteMicroserviceBtn: $('<span class="input-group-addon link">Delete</span>').click(function () {
+        var microserviceId = _dom.allMicroserviceSelect.val();
+        if(microserviceId === '')
+          microserviceId = _dom.microserviceIdTxt.val();
+        _statics.msManagement.deleteMicroservice(_dom, _state, config, microserviceId);
       }),
       callMicroserviceBtn: $('<span class="input-group-addon link">'+config.callBtnText+'</span>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
