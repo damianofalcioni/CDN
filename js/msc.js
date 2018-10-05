@@ -1270,7 +1270,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         });
       },
       initOperationsSelect: function (_dom, _state, config, microserviceId) {
-        _dom.allMicroserviceOperationsSelect.empty().append('<option value="">Select an operation</option>');
+        _dom.allMicroserviceOperationsSelect.empty();//.append('<option value="">Select an operation</option>');
         if (microserviceId != '') {
           _statics.services.retrieveMicroserviceDetails(config.mscEndpoint, microserviceId, function (msDetails) {
             _state.lastMicroserviceSelectedDetails = msDetails;
@@ -1280,7 +1280,8 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           }, function (error) {
             Utils.showError(error, _dom.messageDiv);
           });
-        }
+        } else
+          _dom.allMicroserviceOperationsSelect.append('<option value="">First select a Microservice</option>');
         _dom.allMicroserviceOperationsSelect.trigger('change');
       },
       initConnectors: function (_dom, _state, config) {
@@ -1372,19 +1373,24 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
     },
     ui: {
       render: function (_dom) {
-        return $('<div>').append(
-          $('<div class="input-group">').append(
-            '<span class="input-group-addon">Microservice ID:</span>').append(
-            _dom.microserviceIdTxt).append(
-            '<span class="input-group-addon">or</span>').append(
-            _dom.allMicroserviceSelect).append(
-            _dom.deleteMicroserviceBtn).append(
-            _dom.editMicroserviceBtn).append(
-            _dom.newEmptyMicroserviceBtn)).append(
-          $('<div class="input-group">').append(
-            '<span class="input-group-addon">MS Operation:</span>').append(
-            _dom.allMicroserviceOperationsSelect).append(
-            _dom.callMicroserviceBtn)).append(
+        return $('<div class="container">').append(
+          $('<div class="row form-group">').append(
+            $('<div class="col-lg-12">').append(
+              $('<div class="input-group">').append(
+                '<span class="input-group-addon">Microservice ID:</span>').append(
+                _dom.microserviceIdTxt).append(
+                '<span class="input-group-addon">or</span>').append(
+                _dom.allMicroserviceSelect).append(
+                _dom.deleteMicroserviceBtn).append(
+                _dom.editMicroserviceBtn).append(
+                _dom.newEmptyMicroserviceBtn)))).append(
+          '<br>').append(
+          $('<div class="row form-group">').append(
+            $('<div class="col-lg-12">').append(
+              $('<div class="input-group">').append(
+                '<span class="input-group-addon">Operation Name :</span>').append(
+                _dom.allMicroserviceOperationsSelect).append(
+                _dom.callMicroserviceBtn)))).append(
           _dom.messageDiv);
           
       }
