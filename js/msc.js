@@ -1364,11 +1364,30 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             _dom.microserviceIdTxt).append(
             '<span class="input-group-addon">or</span>').append(
             _dom.allMicroserviceSelect).append(
+            $('<div class="input-group-btn">').append(
+              $('<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></button>')).append(
+              $('<ul class="dropdown-menu">').append(
+                $('<li>').append(
+                  _dom.editMicroserviceBtn)).append(
+                $('<li>').append(
+                  _dom.newEmptyMicroserviceBtn)))).append(
+            _dom.allMicroserviceOperationsSelect).append(
+              _dom.callMicroserviceBtn)).append(
+          _dom.messageDiv);
+          
+          /*
+          $('<div>').append(
+          $('<div class="input-group">').append(
+            '<span class="input-group-addon">ID:</span>').append(
+            _dom.microserviceIdTxt).append(
+            '<span class="input-group-addon">or</span>').append(
+            _dom.allMicroserviceSelect).append(
             _dom.editMicroserviceBtn).append(
             _dom.newEmptyMicroserviceBtn).append(
             _dom.allMicroserviceOperationsSelect).append(
               _dom.callMicroserviceBtn)).append(
           _dom.messageDiv);
+          */
       }
     }
   };
