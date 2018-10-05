@@ -1425,7 +1425,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
                 _dom.editMicroserviceBtn).append(
                 _dom.newEmptyMicroserviceBtn)))).append(
           $('<div class="row form-group">').append(
-            $('<div class="col-lg-8">').append(
+            $('<div class="col-lg-9">').append(
               $('<div class="input-group">').append(
                 '<span class="input-group-addon">Operation Name:</span>').append(
                 _dom.allMicroserviceOperationsSelect).append(
