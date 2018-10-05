@@ -1255,7 +1255,22 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
       },
       createEmptyMicroserviceConfiguration: function (restEndpoint, successCallback, failureCallback) {
         Utils.callService(restEndpoint + 'msc/createEmptyMicroserviceConfiguration', null, null, successCallback, failureCallback);
-      }
+      },
+      startMicroservice: function (restEndpoint, microserviceId, operationId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/startMicroservice', 'microserviceId=' + microserviceId + '&operationId=' + operationId, null, successCallback, failureCallback);
+      },
+      startAllMicroserviceOperations: function (restEndpoint, microserviceId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/startAllMicroserviceOperations', 'microserviceId=' + microserviceId, null, successCallback, failureCallback);
+      },
+      stopMicroservice: function (restEndpoint, microserviceId, operationId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/stopMicroservice', 'microserviceId=' + microserviceId + '&operationId=' + operationId, null, successCallback, failureCallback);
+      },
+      stopAllMicroserviceOperations: function (restEndpoint, microserviceId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/stopAllMicroserviceOperations', 'microserviceId=' + microserviceId, null, successCallback, failureCallback);
+      },
+      checkMicroserviceConnectorStatus: function (restEndpoint, microserviceId, operationId, successCallback, failureCallback) {
+        Utils.callService(restEndpoint + 'msc/checkMicroserviceConnectorStatus', 'microserviceId=' + microserviceId + '&operationId=' + operationId, null, successCallback, failureCallback);
+      },
     },
     init: {
       initMicroserviceSelect: function (_dom, _state, config) {
@@ -1284,6 +1299,19 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           _dom.allMicroserviceOperationsSelect.append('<option value="">First select a Microservice</option>');
         _dom.allMicroserviceOperationsSelect.trigger('change');
       },
+      initCheckStatusSpan: function (_dom, _state, config, microserviceId, operationId) {
+        _statics.services.checkMicroserviceConnectorStatus(config.mscEndpoint, microserviceId, operationId, function (checkStatus) {
+          var status = checkStatus.connectorInstanceStatus;
+          var errorDesc = checkStatus.error;
+          _state.lastOperationStatus.status = status;
+          _state.lastOperationStatus.errorDesc = errorDesc;
+          _dom.checkStatusSpan.empty().append(
+            _statics.utils.createSVGCircle(status==='STARTED'?'green':status==='STOPPED'?'red':status==='ERROR'?'yellow':'grey')
+          );
+        }, function (error) {
+          Utils.showError(error, _dom.messageDiv);
+        });
+      },
       initConnectors: function (_dom, _state, config) {
         _statics.services.getAvailableConnectors(config.mscEndpoint, function (data) {
           _state.connectors = data;
@@ -1295,6 +1323,11 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
       initMain: function (_dom, _state, config) {
         _statics.init.initConnectors(_dom, _state, config);
         _statics.init.initMicroserviceSelect(_dom, _state, config);
+      }
+    },
+    utils: {
+      createSVGCircle: function (color) {
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="'+color+'" stroke="'+color+'" stroke-opacity="0.4" stroke-width="2"/></svg>';
       }
     },
     msManagement: {
@@ -1389,6 +1422,9 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
               $('<div class="input-group">').append(
                 '<span class="input-group-addon">Operation Name:</span>').append(
                 _dom.allMicroserviceOperationsSelect).append(
+                _dom.checkStatusSpan).append(
+                _dom.startMicroserviceBtn).append(
+                _dom.stopMicroserviceBtn).append(
                 _dom.callMicroserviceBtn)))).append(
           _dom.messageDiv);
           
@@ -1403,7 +1439,8 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
     
     var _state = {
       lastMicroserviceSelectedDetails: null,
-      connectors: ''
+      connectors: '',
+      lastOperationStatus: {}
     };
 
     var _dom = {
@@ -1437,7 +1474,15 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         },
         trigger: 'hover'
       }),
-      allMicroserviceOperationsSelect: $('<select class="form-control">').popover({
+      allMicroserviceOperationsSelect: $('<select class="form-control">').change(function () {
+        var microserviceId = _dom.allMicroserviceSelect.val();
+        if(microserviceId === '')
+          microserviceId = _dom.microserviceIdTxt.val();
+        var operationId = _dom.allMicroserviceOperationsSelect.val();
+        if(microserviceId === '' || operationId === '')
+          return;
+        _statics.init.initCheckStatusSpan(_dom, _state, config, microserviceId, operationId);
+      }).popover({
         placement: 'auto left',
         container: 'body',
         html: true,
@@ -1484,6 +1529,60 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         _statics.msManagement.showMicroserviceCallUI(_dom, config, microserviceId, operationId, {}, function (msCallConfig, microserviceId, operationId) {
           config.callConfigHandlerFn(msCallConfig, microserviceId, operationId);
         });
+      }),
+      startMicroserviceBtn: $('<span class="input-group-addon link">Start</span>').click(function () {
+        var microserviceId = _dom.allMicroserviceSelect.val();
+        if(microserviceId === '')
+          microserviceId = _dom.microserviceIdTxt.val();
+        var operationId = _dom.allMicroserviceOperationsSelect.val();
+        if(microserviceId === '')
+          return;
+        
+        if(operationId === '') {
+          _statics.services.startAllMicroserviceOperations(config.mscEndpoint, microserviceId, function () {
+            Utils.showSuccess('All Microservice operations started', _dom.messageDiv);
+          }, function (error) {
+            Utils.showError(error, _dom.messageDiv);
+          });
+        } else {
+          _statics.services.startMicroservice(config.mscEndpoint, microserviceId, operationId, function () {
+            Utils.showSuccess('Microservice operation "'+operationId+'" started', _dom.messageDiv);
+          }, function (error) {
+            Utils.showError(error, _dom.messageDiv);
+          });
+        }
+      }),
+      stopMicroserviceBtn: $('<span class="input-group-addon link">Stop</span>').click(function () {
+        var microserviceId = _dom.allMicroserviceSelect.val();
+        if(microserviceId === '')
+          microserviceId = _dom.microserviceIdTxt.val();
+        var operationId = _dom.allMicroserviceOperationsSelect.val();
+        if(microserviceId === '')
+          return;
+        
+        if(operationId === '') {
+          _statics.services.stopAllMicroserviceOperations(config.mscEndpoint, microserviceId, function () {
+            Utils.showSuccess('All Microservice operations stopped', _dom.messageDiv);
+          }, function (error) {
+            Utils.showError(error, _dom.messageDiv);
+          });
+        } else {
+          _statics.services.stopMicroservice(config.mscEndpoint, microserviceId, operationId, function () {
+            Utils.showSuccess('Microservice operation "'+operationId+'" stopped', _dom.messageDiv);
+          }, function (error) {
+            Utils.showError(error, _dom.messageDiv);
+          });
+        }
+      }),
+      checkStatusSpan: $('<span>').popover({
+        placement: 'auto left',
+        container: 'body',
+        html: true,
+        title: 'Status Check',
+        content: function () {
+          return 'Status: ' + (_state.lastOperationStatus && _state.lastOperationStatus.status?_state.lastOperationStatus.status:'Nothing selected') + (_state.lastOperationStatus && _state.lastOperationStatus.errorDesc && _state.lastOperationStatus.errorDesc!=''?'<br>Error:'+errorDesc:'');
+        },
+        trigger: 'hover'
       }),
       messageDiv: $('<div>')
     };
