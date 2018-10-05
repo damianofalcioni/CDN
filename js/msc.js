@@ -1301,6 +1301,12 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         }
       },
       initCheckStatusSpan: function (_dom, _state, config, microserviceId, operationId) {
+        if(operationId=='') {
+          _dom.checkStatusSpan.empty().append(
+            _statics.utils.createSVGCircle('grey')
+          );
+          return;
+        }
         _statics.services.checkMicroserviceConnectorStatus(config.mscEndpoint, microserviceId, operationId, function (checkStatus) {
           var status = checkStatus.connectorInstanceStatus;
           var errorDesc = checkStatus.error;
@@ -1328,7 +1334,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
     },
     utils: {
       createSVGCircle: function (color) {
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="'+color+'" stroke="'+color+'" stroke-opacity="0.4" stroke-width="2"/></svg>';
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="'+color+'" stroke="'+color+'" stroke-opacity="0.4" stroke-width="2"/></svg>';
       }
     },
     msManagement: {
@@ -1419,7 +1425,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
                 _dom.editMicroserviceBtn).append(
                 _dom.newEmptyMicroserviceBtn)))).append(
           $('<div class="row form-group">').append(
-            $('<div class="col-lg-6">').append(
+            $('<div class="col-lg-10">').append(
               $('<div class="input-group">').append(
                 '<span class="input-group-addon">Operation Name:</span>').append(
                 _dom.allMicroserviceOperationsSelect).append(
@@ -1480,8 +1486,6 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
         var operationId = _dom.allMicroserviceOperationsSelect.val();
-        if(microserviceId === '' || operationId === '')
-          return;
         _statics.init.initCheckStatusSpan(_dom, _state, config, microserviceId, operationId);
       }).popover({
         placement: 'auto left',
@@ -1541,12 +1545,14 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         
         if(operationId === '') {
           _statics.services.startAllMicroserviceOperations(config.mscEndpoint, microserviceId, function () {
+            _statics.init.initCheckStatusSpan(_dom, _state, config, microserviceId, operationId);
             Utils.showSuccess('All Microservice operations started', _dom.messageDiv);
           }, function (error) {
             Utils.showError(error, _dom.messageDiv);
           });
         } else {
           _statics.services.startMicroservice(config.mscEndpoint, microserviceId, operationId, function () {
+            _statics.init.initCheckStatusSpan(_dom, _state, config, microserviceId, operationId);
             Utils.showSuccess('Microservice operation "'+operationId+'" started', _dom.messageDiv);
           }, function (error) {
             Utils.showError(error, _dom.messageDiv);
@@ -1563,12 +1569,14 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         
         if(operationId === '') {
           _statics.services.stopAllMicroserviceOperations(config.mscEndpoint, microserviceId, function () {
+            _statics.init.initCheckStatusSpan(_dom, _state, config, microserviceId, operationId);
             Utils.showSuccess('All Microservice operations stopped', _dom.messageDiv);
           }, function (error) {
             Utils.showError(error, _dom.messageDiv);
           });
         } else {
           _statics.services.stopMicroservice(config.mscEndpoint, microserviceId, operationId, function () {
+            _statics.init.initCheckStatusSpan(_dom, _state, config, microserviceId, operationId);
             Utils.showSuccess('Microservice operation "'+operationId+'" stopped', _dom.messageDiv);
           }, function (error) {
             Utils.showError(error, _dom.messageDiv);
