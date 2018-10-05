@@ -1285,8 +1285,9 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         });
       },
       initOperationsSelect: function (_dom, _state, config, microserviceId) {
-        _dom.allMicroserviceOperationsSelect.empty().append('<option value="">Select a Microservice Operation</option>');
+        _dom.allMicroserviceOperationsSelect.empty();
         if (microserviceId != '') {
+          _dom.allMicroserviceOperationsSelect.append('<option value="">Select a Microservice Operation</option>');
           _statics.services.retrieveMicroserviceDetails(config.mscEndpoint, microserviceId, function (msDetails) {
             _state.lastMicroserviceSelectedDetails = msDetails;
             Object.keys(msDetails.operations).forEach(function (operationId) {
@@ -1294,6 +1295,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             });
             _dom.allMicroserviceOperationsSelect.trigger('change');
           }, function (error) {
+            _dom.allMicroserviceOperationsSelect.trigger('change');
             Utils.showError(error, _dom.messageDiv);
           });
         } else {
