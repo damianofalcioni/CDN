@@ -1364,8 +1364,8 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             _dom.microserviceIdTxt).append(
             '<span class="input-group-addon">or</span>').append(
             _dom.allMicroserviceSelect).append(
-            $('<div class="input-group-btn">').append(
-              $('<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="caret"></span></button>')).append(
+            $('<span class="input-group-addon link">').append(
+              $('<span class="caret dropdown-toggle" data-toggle="dropdown">')).append(
               $('<ul class="dropdown-menu">').append(
                 $('<li>').append(
                   _dom.editMicroserviceBtn)).append(
