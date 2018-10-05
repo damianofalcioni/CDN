@@ -1373,7 +1373,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
     },
     ui: {
       render: function (_dom) {
-        return $('<div class="container">').append(
+        return $('<div class="container-fluid">').append(
           $('<div class="row form-group">').append(
             $('<div class="col-lg-12">').append(
               $('<div class="input-group">').append(
@@ -1384,11 +1384,10 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
                 _dom.deleteMicroserviceBtn).append(
                 _dom.editMicroserviceBtn).append(
                 _dom.newEmptyMicroserviceBtn)))).append(
-          '<br>').append(
           $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
+            $('<div class="col-lg-6">').append(
               $('<div class="input-group">').append(
-                '<span class="input-group-addon">Operation Name :</span>').append(
+                '<span class="input-group-addon">Operation Name:</span>').append(
                 _dom.allMicroserviceOperationsSelect).append(
                 _dom.callMicroserviceBtn)))).append(
           _dom.messageDiv);
@@ -1448,7 +1447,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         },
         trigger: 'hover'
       }),
-      newEmptyMicroserviceBtn: $('<span class="input-group-addon link">New</span>').click(function () {
+      newEmptyMicroserviceBtn: $('<span class="input-group-addon link">Create New</span>').click(function () {
         _statics.services.createEmptyMicroserviceConfiguration(config.mscEndpoint, function (msDefinition) {
           _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
             _statics.msManagement.createMicroservice(_dom, _state, config, msDefinitionOut);
