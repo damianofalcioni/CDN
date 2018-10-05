@@ -1367,8 +1367,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             _dom.editMicroserviceBtn).append(
             _dom.newEmptyMicroserviceBtn).append(
             _dom.allMicroserviceOperationsSelect).append(
-            $('<span class="input-group-btn">').append(
-              _dom.callMicroserviceBtn))).append(
+              _dom.callMicroserviceBtn)).append(
           _dom.messageDiv);
       }
     }
@@ -1377,6 +1376,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
   var functionRet = function (config={}) {
     config.mscEndpoint = config.mscEndpoint || '';
     config.callConfigHandlerFn = config.callConfigHandlerFn || function (callConfig) {};
+    config.callBtnText = config.callBtnText || 'Call';
     
     var _state = {
       lastMicroserviceSelectedDetails: null,
@@ -1433,7 +1433,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-      editMicroserviceBtn: $('<pan class="input-group-addon link">Edit</span>').click(function () {
+      editMicroserviceBtn: $('<span class="input-group-addon link">Edit</span>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
@@ -1447,7 +1447,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-      callMicroserviceBtn: $('<button class="btn btn-default" type="button">Call</button>').click(function () {
+      callMicroserviceBtn: $('<span class="input-group-addon link">'+config.callBtnText+'</span>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
@@ -1562,7 +1562,8 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
               microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
               microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
             });
-          }
+          },
+          callBtnText: 'Add to View'
         });
       },
       initMain: function (_dom, _sub, config) {
