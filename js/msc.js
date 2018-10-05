@@ -1064,7 +1064,7 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
         setContent: function (content = {}) {
           _doms.ownerHtmlTxt.val(content.ownerHtml || '');
           _doms.presentationImageUrlTxt.val(content.presentationImageUrl || '');
-          _doms.descriptionHtmlDiv.summernote('insertText', content.descriptionHtml || '');
+          _doms.descriptionHtmlDiv.summernote('code', content.descriptionHtml || '');
         }
       };
     };
