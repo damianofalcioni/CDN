@@ -1425,7 +1425,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
                 _dom.editMicroserviceBtn).append(
                 _dom.newEmptyMicroserviceBtn)))).append(
           $('<div class="row form-group">').append(
-            $('<div class="col-lg-10">').append(
+            $('<div class="col-lg-8">').append(
               $('<div class="input-group">').append(
                 '<span class="input-group-addon">Operation Name:</span>').append(
                 _dom.allMicroserviceOperationsSelect).append(
@@ -1583,7 +1583,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           });
         }
       }),
-      checkStatusSpan: $('<span>').popover({
+      checkStatusSpan: $('<span class="input-group-addon">').popover({
         placement: 'auto left',
         container: 'body',
         html: true,
