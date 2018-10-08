@@ -1,8 +1,10 @@
-(function ($) {
+(function (root, factory) {
+  root.olive = factory(root.jQuery);
+}(typeof window !== "undefined" ? window : this, function ($) {
 
 
 'use strict';
-this.olive = {
+var olive = {
   modules: {}
 };
 //------------------------------------------------------------------------
@@ -1806,5 +1808,6 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
   };
 }(olive.modules.newMicroserviceCallViewUI));
 
+return olive;
 
-}(Window.jQuery));
+}));
