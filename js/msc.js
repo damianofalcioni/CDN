@@ -1,3 +1,6 @@
+(function ($) {
+
+
 'use strict';
 this.olive = {
   modules: {}
@@ -1445,7 +1448,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
 
   var functionRet = function (config={}) {
     config.mscEndpoint = config.mscEndpoint || '';
-    config.callConfigHandlerFn = config.callConfigHandlerFn || function (callConfig) {};
+    config.callConfigHandlerFn = config.callConfigHandlerFn || function (msCallConfig, microserviceId, operationId) {};
     config.callBtnText = config.callBtnText || 'Call';
     
     var _state = {
@@ -1803,3 +1806,5 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
   };
 }(olive.modules.newMicroserviceCallViewUI));
 
+
+}(Window.jQuery));
