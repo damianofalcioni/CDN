@@ -1680,7 +1680,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
             fn: function (row) {
               var rowContent = row.getContent();
               newMicroserviceManagementInlineUI.showMicroserviceCallUI(_dom, config, rowContent.microserviceId, rowContent.operationId, {
-                menuName: rowContent.rowContent,
+                menuName: rowContent.menuName,
                 microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
                 microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
               }, function (callConfigUIContent, microserviceId, operationId) {
