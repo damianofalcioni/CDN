@@ -26,7 +26,43 @@ olive.utils = (function () {
         })
         .appendTo((parentDom != null) ? parentDom : $('#mainContainer'));
     },
+    
+    getHost: function () {
+      var ret = ((window.location.protocol == '')?'http:':window.location.protocol) + '//' + ((window.location.hostname == '')?'127.0.0.1':window.location.hostname) + ':' + ((window.location.port == '')?'8080':window.location.port);
+      return ret;
+    },
+    
+    getPageUrl: function () {
+      return _utils.getHost() + window.location.pathname;
+    },
+    
+    getURLParameter: function (sParam) {
+      var sPageURL = window.location.search.substring(1);
+      var sURLVariables = sPageURL.split('&');
+      for (var i = 0; i < sURLVariables.length; i++) {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+          return sParameterName[1];
+      }
+      return null;
+    },
 
+    neverNull: function (param) {
+      return param == null ? '' : param;
+    },
+
+    generateUUID: function () {
+      var d = new Date().getTime();
+      if (typeof performance !== 'undefined' && typeof performance.now === 'function')
+        d += performance.now(); //use high-precision timer if available
+
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    },
+    
     callService: function (url, paramsQueryString, postData, successCallback, failureCallback) {
       var serviceUrl = url + (paramsQueryString != null ? '?' + paramsQueryString : '');
       var ajaxConfig = {
@@ -141,8 +177,11 @@ olive.utils = (function () {
         ret.push(arrObj);
       });
       return ret;
+    },
+    
+    clone: function (obj) {
+      return JSON.parse(JSON.stringify(obj));
     }
-
   };
   return _utils;
 }());
@@ -313,7 +352,7 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
       showMSResult: function (output, adaptationAlg, originalResultTxt, adaptedResultDiv, messagesDiv) {
           if (originalResultTxt && originalResultTxt.val)
             originalResultTxt.val(JSON.stringify(output, null, 4));
-          if (adaptationAlg.indexOf('return') === -1) {
+          if (adaptationAlg.indexOf('return ') === -1) {
             adaptationAlg = 'return $("<pre>").append($("<code>").append(JSON.stringify(output, null, 2)));';
           }
           try {
@@ -344,6 +383,8 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
             _dom.inputTxts[inputId] = $('<textarea style="resize:vertical;" rows="1" class="form-control" placeholder="' + inputInfos.workingExample + '">' + inputInfos.workingExample + '</textarea>');
             _dom.resultDescriptionSpan.text(msIOInfo.outputDescription);
             _dom.callEndpointSpan.text(mscEndpoint + '?microserviceId=' + microserviceId + '&operationId=' + operationId);
+            _dom.callMicroserviceIdSpan.text(microserviceId);
+            _dom.callMicroserviceOperationIdSpan.text(operationId);
             _dom.callInputJsonPre.html(JSON.stringify(_state.requiredInputs, null, 4));
 
             _dom.tableTbody.append(
@@ -366,9 +407,9 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
       }
     },
     ui: {
-      render: function (_dom) {
+      render: function (_dom, _state) {
         return _dom.rootNode.append(_dom.messageDiv).append(
-          $('<div class="input-group">').append(
+          $('<div class="input-group">').toggle(_state.showServiceNameTxt).append(
             '<span class="input-group-addon">Service Name: </span>').append(
             _dom.serviceNameTxt)).append('<br>').append(
           $('<div class="container-fluid">').append(
@@ -384,7 +425,11 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
           $('<div class="row">').append(
             $('<div class="col-md-6">').append(
               $('<div class="well">').append(
-                '<b>POST Endpoint</b><br>').append(
+                '<b>Miscroservice ID: </b>').append(
+                _dom.callMicroserviceIdSpan).append(
+                '<br><b>Microservice Operation: </b>').append(
+                _dom.callMicroserviceOperationIdSpan).append(
+                '<br><br><b>POST Endpoint</b><br>').append(
                 _dom.callEndpointSpan).append(
                 '<br><b>POST Input Data</b><br>').append(
                 _dom.callInputJsonPre).append(
@@ -395,7 +440,7 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
             $('<div class="col-md-6">').append(
               $('<div class="panel panel-default">').append(
                 $('<div class="panel-heading">').append(
-                  $('<h4 class="panel-title">Service Output Page Preview</h4>'))).append(
+                  $('<h4 class="panel-title">Service Output Post-Rendering Preview</h4>'))).append(
                 $('<div class="panel-body">').append(
                   _dom.resultDemoDiv)))));
       },
@@ -423,7 +468,7 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
           _dom.inputTxts[inputId].val(content.microserviceInputs && content.microserviceInputs[inputId] && content.microserviceInputs[inputId].value?content.microserviceInputs[inputId].value:'');
         });
         if(_state.aceEditor)
-          _state.aceEditor.setValue(content.microserviceOutputAdaptAlg || '');
+          _state.aceEditor.setValue(content.microserviceOutputAdaptAlg || '/*\n  Javascript algoritm that "return" a DOM object.\n  The algorithm can access the microservice output content\n  using the variable "output"\n*/');
         else
           throw 'aceEditor not initialized';
       }
@@ -434,11 +479,13 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
     var mscEndpoint = config.mscEndpoint || '';
     var microserviceId = config.microserviceId || '';
     var operationId = config.operationId || '';
-    var forceStartWhenStopped = config.forceStartWhenStopped || true;
+    var forceStartWhenStopped = config.forceStartWhenStopped!=null?config.forceStartWhenStopped:true;
+    var showServiceNameTxt = config.showServiceNameTxt!=null?config.showServiceNameTxt:true;
     
     var _state = {
       requiredInputs: {},
-      aceEditor: null
+      aceEditor: null,
+      showServiceNameTxt: showServiceNameTxt
     };
     
     var _dom = {
@@ -449,6 +496,8 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
       resultTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control" placeholder="Call results"></textarea>'),
       resultDescriptionSpan: $('<span>'),
       resultDemoDiv: $('<div>'),
+      callMicroserviceIdSpan: $('<span>'),
+      callMicroserviceOperationIdSpan: $('<span>'),
       callEndpointSpan: $('<span>'),
       callInputJsonPre: $('<pre>'),
       tableTbody: $('<tbody>'),
@@ -484,7 +533,7 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
         _statics.ui.setContent(_dom, _state, content);
       },
       render: function () {
-        return _statics.ui.render(_dom);
+        return _statics.ui.render(_dom, _state);
       },
       afterRender: function () {
         _statics.ui.afterRender(_dom, _state);
@@ -510,7 +559,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
           _dom.outputDiv.removeClass('loading');
 
           var alg = msConfig.microserviceOutputAdaptAlg;
-          if (alg.indexOf('return') === -1) {
+          if (alg.indexOf('return ') === -1) {
             alg = 'return $("<pre>").append($("<code>").append(JSON.stringify(output, null, 2)));';
           }
           try {
@@ -1404,10 +1453,11 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             mscEndpoint: config.mscEndpoint,
             microserviceId: microserviceId,
             operationId: operationId,
-            forceStartWhenStopped: true
+            forceStartWhenStopped: true,
+            showServiceNameTxt: config.showServiceNameTxt
           });
           
-          Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Call Microservice', function () {
+          Utils.createDialogBootstrap(microserviceCallConfigUI.render(), 'Call Microservice with ID: ' + microserviceId + ' Operation: '+operationId, function () {
             return true;
           }, function () {
             okHandlerFn(microserviceCallConfigUI.getContent(), microserviceId, operationId);
@@ -1452,6 +1502,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
     config.mscEndpoint = config.mscEndpoint || '';
     config.callConfigHandlerFn = config.callConfigHandlerFn || function (msCallConfig, microserviceId, operationId) {};
     config.callBtnText = config.callBtnText || 'Call';
+    config.showServiceNameTxt = config.showServiceNameTxt!=null?config.showServiceNameTxt:true;
     
     var _state = {
       lastMicroserviceSelectedDetails: null,
@@ -1598,7 +1649,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         html: true,
         title: 'Status Check',
         content: function () {
-          return 'Status: ' + (_state.lastOperationStatus && _state.lastOperationStatus.status?_state.lastOperationStatus.status:'Nothing selected') + (_state.lastOperationStatus && _state.lastOperationStatus.errorDesc && _state.lastOperationStatus.errorDesc!=''?'<br>Error:'+errorDesc:'');
+          return 'Status: ' + (_state.lastOperationStatus && _state.lastOperationStatus.status?_state.lastOperationStatus.status:'Nothing selected') + (_state.lastOperationStatus && _state.lastOperationStatus.errorDesc && _state.lastOperationStatus.errorDesc!=''?'<br>Error: '+_state.lastOperationStatus.errorDesc:'');
         },
         trigger: 'hover'
       }),
