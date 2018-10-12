@@ -1,9 +1,9 @@
+'use strict';
 (function (root, factory) {
   root.olive = factory(root.jQuery);
 }(typeof window !== "undefined" ? window : this, function ($) {
+if (typeof $.fn.popover != 'function') throw 'Bootstrap Required';
 
-
-'use strict';
 var olive = {
   modules: {}
 };
