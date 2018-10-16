@@ -601,6 +601,9 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
       }
     },
     init: {
+      checkConfig: function (config) {
+        config.mscEndpoint = config.mscEndpoint || '';
+      },
       loadContent: function (_dom, msConfig, mscEndpoint) {
         _dom.outputDiv.empty().addClass('loading');
 
@@ -626,6 +629,18 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
       }
     },
     ui: {
+      newDom: function () {
+        return {
+          panelHeader: $('<div class="panel-heading link">').click(function () {
+            _dom.panelCollapsable.collapse('toggle');
+          }),
+          panelRoot: $('<div class="panel panel-default">'),
+          panelTitle: $('<span>'),
+          panelCollapsable: $('<div class="panel-collapse">'),
+          messageDiv: $('<div>'),
+          outputDiv: $('<div>')
+        };
+      },
       render: function (_dom) {
         return _dom.panelRoot.append(
           _dom.panelHeader.append(
@@ -653,18 +668,9 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
   };
 
   return function (config={}) {
-    config.mscEndpoint = config.mscEndpoint || '';
-
-    var _dom = {
-      panelHeader: $('<div class="panel-heading link">').click(function () {
-        _dom.panelCollapsable.collapse('toggle');
-      }),
-      panelRoot: $('<div class="panel panel-default">'),
-      panelTitle: $('<span>'),
-      panelCollapsable: $('<div class="panel-collapse">'),
-      messageDiv: $('<div>'),
-      outputDiv: $('<div>')
-    };
+    _statics.init.checkConfig(config);
+    
+    var _dom = _statics.ui.newDom();
     
     return {
       render: function () {
