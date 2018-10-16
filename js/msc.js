@@ -676,7 +676,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
       render: function () {
         return _statics.ui.render(_dom);
       },
-      setContent: function (content) {
+      setContent: function (content={}) {
         return _statics.ui.setContent(_dom, config, content);
       }
     };
@@ -1881,14 +1881,20 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
 olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
 
   var _statics = {
-    init: {
-      loadPanels: function (_dom, config) {
+    ui: {
+      render: function (_dom) {
+        return $('<div>').append(
+          _dom.messageDiv
+        ).append(
+          _dom.panelList);
+      },
+      setContent: function (_dom, config, content) {
         var showAll = true;
-        config.contentJsonArray.forEach(function (serviceConfig) {
+        content.forEach(function (serviceConfig) {
           if (config.viewName === serviceConfig.menuName)
             showAll = false;
         });
-        config.contentJsonArray.forEach(function (serviceConfig) {
+        content.forEach(function (serviceConfig) {
           if (showAll || config.viewName === serviceConfig.menuName) {
             var singleService = newMicroserviceCallViewUI({
               mscEndpoint: config.mscEndpoint
@@ -1898,19 +1904,10 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
           }
         });
       }
-    },
-    ui: {
-      render: function (_dom) {
-        return $('<div>').append(
-          _dom.messageDiv
-        ).append(
-          _dom.panelList);
-      }
     }
   };
 
   return function (config = {}) {
-    config.contentJsonArray = config.contentJsonArray || [];
     config.viewName = config.viewName || '';
     config.mscEndpoint = config.mscEndpoint || '';
     
@@ -1919,11 +1916,12 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
       panelList: []
     };
     
-    _statics.init.loadPanels(_dom, config);
-    
     return {
       render: function () {
         return _statics.ui.render(_dom);
+      },
+      setContent: function (content=[]) {
+        _statics.ui.setContent(_dom, config, content);
       }
     };
   };
