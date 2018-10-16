@@ -1886,7 +1886,7 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
         return $('<div>').append(
           _dom.messageDiv
         ).append(
-          _dom.panelList);
+          _dom.panelsDiv);
       },
       setContent: function (_dom, config, content) {
         var showAll = true;
@@ -1894,13 +1894,14 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
           if (config.viewName === serviceConfig.menuName)
             showAll = false;
         });
+        _dom.panelsDiv.empty();
         content.forEach(function (serviceConfig) {
           if (showAll || config.viewName === serviceConfig.menuName) {
             var singleService = newMicroserviceCallViewUI({
               mscEndpoint: config.mscEndpoint
             });
             singleService.setContent(serviceConfig);
-            _dom.panelList.push(singleService.render());
+            _dom.panelsDiv.append(singleService.render());
           }
         });
       }
@@ -1913,7 +1914,7 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
     
     var _dom = {
       messageDiv: $('<div>'),
-      panelList: []
+      panelsDiv: $('<div>')
     };
     
     return {
