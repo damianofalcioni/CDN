@@ -1832,7 +1832,8 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
               microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
             });
           },
-          callBtnText: 'Add to View'
+          callBtnText: 'Add to View',
+          showServiceNameTxt: true
         });
       },
       initMain: function (_dom, _sub, config) {
