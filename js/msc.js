@@ -1800,7 +1800,9 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
             iconClass: 'glyphicon glyphicon-pencil',
             fn: function (row) {
               var rowContent = row.getContent();
-              newMicroserviceManagementInlineUI.showMicroserviceCallUI(_dom, config, rowContent.microserviceId, rowContent.operationId, {
+              newMicroserviceManagementInlineUI.showMicroserviceCallUI(_dom, {
+                mscEndpoint: config.mscEndpoint
+              }, rowContent.microserviceId, rowContent.operationId, {
                 menuName: rowContent.menuName,
                 microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
                 microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
@@ -1816,7 +1818,6 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
             }
           }]
         });
-        _sub.inputTableModule.setContent(config.contentJsonArray);
       },
       initMsManagementInlineModule: function (_sub, config) {
         _sub.msManagementInlineModule = newMicroserviceManagementInlineUI({
@@ -1846,13 +1847,15 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
           _sub.inputTableModule.render()).append('<br>').append(
           _dom.saveBtn).append(
           _dom.messageDiv);
+      },
+      setContent: function (_sub, content) {
+        _sub.inputTableModule.setContent(content);
       }
     }
   };
 
   return function (config={}) {
     config.mscEndpoint = config.mscEndpoint || '';
-    config.contentJsonArray = config.contentJsonArray || [];
     
     var _sub = {
       msManagementInlineModule: null,
@@ -1872,6 +1875,9 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
     return {
       render: function () {
         return _statics.ui.render(_dom, _sub);
+      },
+      setContent: function (content=[]) {
+        _statics.ui.setContent(_sub, content);
       }
     };
   };
