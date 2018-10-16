@@ -631,7 +631,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
           _dom.panelHeader.append(
             $('<h4 class="panel-title">').append(
               _dom.panelTitle).append(
-              ' <span class="caret"></span>')).append(
+              ' <span class="caret"></span>'))).append(
           _dom.panelCollapsable.append(
             $('<div class="panel-body">').append(
               _dom.messageDiv).append(
