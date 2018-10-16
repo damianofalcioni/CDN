@@ -333,6 +333,55 @@ olive.modules.newTable = (function () {
   };
 }());
 
+olive.modules.newWidgetView = (function (oliveModules) {
+  var _statics = {
+    ui: {
+      render: function (_dom) {}
+
+    },
+    init: {
+      loadContent: function (_dom, config) {
+        _dom.rootDiv.empty();
+        if(config.renderModule != '') {
+          var newRenderModule = oliveModules[config.newRenderModuleName];
+          var renderModule = newRenderModule();
+          _dom.rootDiv.append();
+        }
+      }
+    }
+  };
+  
+  return function (config = {}) {
+    //options for enabling/disabling buttons and collapsable panel
+    config.removeBtnClickFn = config.removeBtnClickFn || function () {};
+    config.newRenderModuleName = config.newRenderModuleName || '';
+    config.renderModuleRenderFnName = config.renderModuleRenderFnName || 'render';
+    config.renderModuleSetFnName = config.renderModuleSetFnName || 'setContent';
+    config.renderModuleGetFnName = config.renderModuleGetFnName || 'getContent';
+    config.newConfigModuleName = config.newConfigModuleName || '';
+    config.configModuleRenderFnName = config.configModuleRenderFnName || 'render';
+    config.configModuleSetFnName = config.configModuleSetFnName || 'setContent';
+    config.configModuleGetFnName = config.configModuleGetFnName || 'getContent';
+    
+    var _dom = {
+      rootDiv: $('<div>'),
+      refeshBtn: $('<button title="Refresh" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-refresh"></span></button>').click(function () {
+        
+      }),
+      settingBtn: $('<button title="Configure" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-wrench"></span></button>').click(function () {
+        
+      }),
+      deleteBtn: $('<button title="Remove" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-trash"></span></button>').click(config.removeBtnClickFn)
+    };
+    
+    return {
+      render: function () {
+        return _statics.ui.render(_dom);
+      }
+    };
+  };
+}(olive.modules));
+
 //------------------------------------------------------------------------
 olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
 
@@ -553,7 +602,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
     },
     init: {
       loadContent: function (_dom, msConfig, mscEndpoint) {
-        _dom.outputDiv.addClass('loading');
+        _dom.outputDiv.empty().addClass('loading');
 
         _statics.services.callMicroserviceForced(mscEndpoint, msConfig.microserviceId, msConfig.operationId, msConfig.microserviceInputJSON, function (data) {
           _dom.outputDiv.removeClass('loading');
@@ -565,7 +614,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
           try {
             var algF = new Function('output', alg + '\n//# sourceURL=microservice_custom_alg.js');
             var domOut = algF(data);
-            _dom.outputDiv.empty().append(domOut);
+            _dom.outputDiv.append(domOut);
           } catch (e) {
             Utils.showError(e, _dom.messageDiv);
           }
@@ -577,37 +626,52 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
       }
     },
     ui: {
-      render: function (_dom, msConfig) {
-        var menuName = msConfig.menuName || '';
-        return $('<div id="' + menuName.replace(' ', '_') + '" class="panel panel-default">').append(
+      render: function (_dom) {
+        return _dom.panelRoot.append(
           _dom.panelHeader.append(
-            '<h4 class="panel-title">' + menuName + ' <span class="caret"></span></h4>')).append(
+            $('<h4 class="panel-title">').append(
+              _dom.panelTitle).append(
+              ' <span class="caret"></span>')).append(
           _dom.panelCollapsable.append(
             $('<div class="panel-body">').append(
               _dom.messageDiv).append(
               _dom.outputDiv)));
+      },
+      setContent: function (_dom, config, content) {
+        content.menuName = content.menuName || '';
+        content.microserviceId = content.microserviceId || '';
+        content.operationId = content.operationId || '';
+        content.microserviceInputJSON = content.microserviceInputJSON || {};
+        content.microserviceOutputAdaptAlg = content.microserviceOutputAdaptAlg || '';
+        
+        _dom.panelRoot.attr('id', content.menuName.replace(' ', '_'));
+        _dom.panelTitle.html(content.menuName);
+        _statics.init.loadContent(_dom, content, config.mscEndpoint);
+        
       }
     }
   };
 
   return function (config={}) {
-    var msConfig = config.msConfig || {};
-    var mscEndpoint = config.mscEndpoint || '';
+    config.mscEndpoint = config.mscEndpoint || '';
 
     var _dom = {
       panelHeader: $('<div class="panel-heading link">').click(function () {
         _dom.panelCollapsable.collapse('toggle');
       }),
+      panelRoot: $('<div class="panel panel-default">'),
+      panelTitle: $('<span>'),
       panelCollapsable: $('<div class="panel-collapse">'),
       messageDiv: $('<div>'),
       outputDiv: $('<div>')
     };
-
-    _statics.init.loadContent(_dom, msConfig, mscEndpoint);
-
+    
     return {
       render: function () {
-        return _statics.ui.render(_dom, msConfig);
+        return _statics.ui.render(_dom);
+      },
+      setContent: function (content) {
+        return _statics.ui.setContent(_dom, config, content);
       }
     };
   };
@@ -1821,9 +1885,9 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI) {
         config.contentJsonArray.forEach(function (serviceConfig) {
           if (showAll || config.viewName === serviceConfig.menuName) {
             var singleService = newMicroserviceCallViewUI({
-                msConfig: serviceConfig,
-                mscEndpoint: config.mscEndpoint
-              });
+              mscEndpoint: config.mscEndpoint
+            });
+            singleService.setContent(serviceConfig);
             _dom.panelList.push(singleService.render());
           }
         });
