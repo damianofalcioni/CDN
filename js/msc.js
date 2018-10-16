@@ -458,9 +458,10 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
     ui: {
       render: function (_dom, _state) {
         return _dom.rootNode.append(_dom.messageDiv).append(
-          $('<div class="input-group">').toggle(_state.showServiceNameTxt).append(
-            '<span class="input-group-addon">Service Name: </span>').append(
-            _dom.serviceNameTxt)).append('<br>').append(
+          $('<div>').toggle(_state.showServiceNameTxt).append(
+            $('<div class="input-group">').append(
+              '<span class="input-group-addon">Service Name: </span>').append(
+              _dom.serviceNameTxt))).append('<br>').append(
           $('<div class="container-fluid">').append(
             $('<div class="row">').append(
               $('<div class="col-md-6">').append(
