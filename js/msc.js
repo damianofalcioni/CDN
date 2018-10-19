@@ -1430,9 +1430,6 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
 
 }(olive.utils, olive.modules.newTable));
 
-
-
-
 //------------------------------------------------------------------------
 olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, newMicroserviceCallConfigUI, newMicroserviceDefinitionUI) {
   var _statics = {
@@ -1829,7 +1826,6 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
 }(olive.utils, olive.modules.newTable, olive.modules.newMicroserviceCallConfigUI, olive.modules.newMicroserviceDefinitionUI));
 
 
-
 //------------------------------------------------------------------------
 olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManagementInlineUI) {
 
@@ -1892,7 +1888,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
               }, rowContent.microserviceId, rowContent.operationId, {
                 serviceName: rowContent.menuName,
                 microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
-                microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
+                microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg.replace(/\\n/g,"\n")
               }, function (callConfigUIContent, microserviceId, operationId) {
                 row.setContent({
                   menuName: callConfigUIContent.serviceName,
@@ -2036,5 +2032,4 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI, newWidgetVi
 }(olive.modules.newMicroserviceCallViewUI, olive.modules.newWidgetView));
 
 return olive;
-
 }));
