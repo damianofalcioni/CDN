@@ -1995,7 +1995,7 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI, newWidgetVi
         var widget = newWidgetView({
           mappingFn: function (out, inp, conf) {
               Object.assign(inp, out);
-              widget.setWidgetTitle(out.serviceName);
+              widget.setWidgetTitle(out.menuName);
           },
           newRenderModule: newMicroserviceCallViewUI,
           newRenderModuleConfig: {
