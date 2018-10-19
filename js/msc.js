@@ -1992,7 +1992,7 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI, newWidgetVi
   var _statics = {
     view: {
       createWidget: function (config) {
-        return newWidgetView({
+        var widget = newWidgetView({
           mappingFn: function (out, inp, conf) {
               Object.assign(inp, out);
               widget.setWidgetTitle(out.serviceName);
@@ -2002,6 +2002,7 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI, newWidgetVi
               mscEndpoint: config.mscEndpoint
           }
         });
+        return widget;
       }
     },
     ui: {
