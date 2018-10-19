@@ -226,13 +226,13 @@ olive.modules.newTable = (function () {
           var ret = {};
           fieldList.forEach(function (field) {
             if(field.type!=='button')
-              ret[field.name] = _dom[field.name].val();
+              ret[field.name] = _dom[field.name].val().replace(/\\n/g,"\n");
           });
           return ret;
         },
         setContent: function (_dom, content) {
           Object.keys(content).forEach(function (key) {
-            _dom[key].val(content[key]);
+            _dom[key].val(content[key]).replace(/\n/g,"\\n");
           });
         }
       }
@@ -1888,14 +1888,14 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
               }, rowContent.microserviceId, rowContent.operationId, {
                 serviceName: rowContent.menuName,
                 microserviceInputs: JSON.parse(rowContent.microserviceInputJSON),
-                microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg.replace(/\\n/g,"\n")
+                microserviceOutputAdaptAlg: rowContent.microserviceOutputAdaptAlg
               }, function (callConfigUIContent, microserviceId, operationId) {
                 row.setContent({
                   menuName: callConfigUIContent.serviceName,
                   microserviceId: microserviceId,
                   operationId: operationId,
                   microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
-                  microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg.replace(/\n/g,"\\n")
+                  microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
                 });
               });
             }
@@ -1911,7 +1911,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
               microserviceId: microserviceId,
               operationId: operationId,
               microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
-              microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg.replace(/\n/g,"\\n")
+              microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
             });
           },
           callBtnText: 'Add to View',
@@ -2003,7 +2003,13 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI, newWidgetVi
         content.forEach(function (serviceConfig) {
           if (showAll || config.viewName === serviceConfig.menuName) {
             var singleService = _statics.view.createWidget(config);
-            singleService.setContent(serviceConfig);
+            singleService.setContent({
+              menuName: serviceConfig.menuName,
+              microserviceId: serviceConfig.microserviceId,
+              operationId: serviceConfig.operationId,
+              microserviceInputJSON: serviceConfig.microserviceInputJSON,
+              microserviceOutputAdaptAlg: serviceConfig.microserviceOutputAdaptAlg,
+            });
             _dom.panelsDiv.append(singleService.render());
           }
         });
