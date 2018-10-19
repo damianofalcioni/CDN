@@ -744,6 +744,10 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
         return _dom;
       },
       render: function (_dom) {
+        return $('<div>').append(
+          _dom.messageDiv).append(
+          _dom.outputDiv);
+        /*
         return _dom.panelRoot.append(
           _dom.panelHeader.append(
             $('<h4 class="panel-title">').append(
@@ -752,7 +756,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
           _dom.panelCollapsable.append(
             $('<div class="panel-body">').append(
               _dom.messageDiv).append(
-              _dom.outputDiv)));
+              _dom.outputDiv)));*/
       },
       setContent: function (_dom, config, content) {
         content.menuName = content.menuName || '';
@@ -2021,12 +2025,7 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI, newWidgetVi
         _dom.panelsDiv.empty();
         content.forEach(function (serviceConfig) {
           if (showAll || config.viewName === serviceConfig.menuName) {
-            
             var singleService = _statics.view.createWidget(config);
-            
-            /*var singleService = newMicroserviceCallViewUI({
-              mscEndpoint: config.mscEndpoint
-            });*/
             singleService.setContent(serviceConfig);
             _dom.panelsDiv.append(singleService.render());
           }
