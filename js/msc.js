@@ -439,15 +439,15 @@ olive.modules.newWidgetView = (function (Utils) {
       panelTitle: $('<span>'),
       panelCollapsable: $('<div class="panel-collapse">'),
       messageDiv: $('<div>'),
-      refeshBtn: $('<button title="Refresh" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-refresh"></span></button>').click(function (e) {
+      refeshBtn: $('<button title="Refresh" class="btn btn-default btn-xs">Refresh</button>').click(function (e) { //btn-sm <span class="glyphicon glyphicon-refresh"></span>
         e.stopPropagation();
         _statics.widget.loadContent(_dom, config, _state);
       }),
-      settingBtn: $('<button title="Configure" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-wrench"></span></button>').click(function (e) {
+      settingBtn: $('<button title="Configure" class="btn btn-default btn-xs">Configure</button>').click(function (e) {//btn-sm <span class="glyphicon glyphicon-wrench"></span>
         e.stopPropagation();
         _statics.widget.loadConfig(_dom, config, _state);
       }),
-      deleteBtn: $('<button title="Remove" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-trash"></span></button>').click(function(e) {
+      deleteBtn: $('<button title="Remove" class="btn btn-default btn-xs">Remove</button>').click(function(e) { //btn-sm <span class="glyphicon glyphicon-trash"></span>
         e.stopPropagation();
         if(config.removeBtnClickFn)
           config.removeBtnClickFn();
@@ -732,12 +732,6 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
     ui: {
       newDom: function () {
         var _dom = {
-          panelHeader: $('<div class="panel-heading link">').click(function () {
-            _dom.panelCollapsable.collapse('toggle');
-          }),
-          panelRoot: $('<div class="panel panel-default">'),
-          panelTitle: $('<span>'),
-          panelCollapsable: $('<div class="panel-collapse">'),
           messageDiv: $('<div>'),
           outputDiv: $('<div>')
         };
@@ -747,16 +741,6 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
         return $('<div>').append(
           _dom.messageDiv).append(
           _dom.outputDiv);
-        /*
-        return _dom.panelRoot.append(
-          _dom.panelHeader.append(
-            $('<h4 class="panel-title">').append(
-              _dom.panelTitle).append(
-              ' <span class="caret"></span>'))).append(
-          _dom.panelCollapsable.append(
-            $('<div class="panel-body">').append(
-              _dom.messageDiv).append(
-              _dom.outputDiv)));*/
       },
       setContent: function (_dom, config, content) {
         content.menuName = content.menuName || '';
@@ -765,10 +749,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
         content.microserviceInputJSON = content.microserviceInputJSON || '{}';
         content.microserviceOutputAdaptAlg = content.microserviceOutputAdaptAlg || '';
         
-        _dom.panelRoot.attr('id', content.menuName.replace(' ', '_'));
-        _dom.panelTitle.html(content.menuName);
         _statics.init.loadContent(_dom, content, config.mscEndpoint);
-        
       }
     }
   };
