@@ -232,7 +232,7 @@ olive.modules.newTable = (function () {
         },
         setContent: function (_dom, content) {
           Object.keys(content).forEach(function (key) {
-            _dom[key].val(content[key]).replace(/\n/g,"\\n");
+            _dom[key].val(content[key].replace(/\n/g,"\\n"));
           });
         }
       }
