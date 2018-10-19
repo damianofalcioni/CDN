@@ -1899,7 +1899,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
                   microserviceId: microserviceId,
                   operationId: operationId,
                   microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
-                  microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
+                  microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg.replace(/\n/g,"\\n")
                 });
               });
             }
@@ -1915,7 +1915,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
               microserviceId: microserviceId,
               operationId: operationId,
               microserviceInputJSON: JSON.stringify(callConfigUIContent.microserviceInputs),
-              microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg
+              microserviceOutputAdaptAlg: callConfigUIContent.microserviceOutputAdaptAlg.replace(/\n/g,"\\n")
             });
           },
           callBtnText: 'Add to View',
