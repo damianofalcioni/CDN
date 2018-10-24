@@ -1705,29 +1705,6 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
     },
     ui: {
       render: function (_dom) {
-        /*
-        return $('<div class="container-fluid">').append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-12">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Microservice ID:</span>').append(
-                _dom.microserviceIdTxt).append(
-                '<span class="input-group-addon">or</span>').append(
-                _dom.allMicroserviceSelect).append(
-                _dom.deleteMicroserviceBtn).append(
-                _dom.editMicroserviceBtn).append(
-                _dom.newEmptyMicroserviceBtn)))).append(
-          $('<div class="row form-group">').append(
-            $('<div class="col-lg-9">').append(
-              $('<div class="input-group">').append(
-                '<span class="input-group-addon">Operation Name:</span>').append(
-                _dom.allMicroserviceOperationsSelect).append(
-                _dom.checkStatusSpan).append(
-                _dom.startMicroserviceBtn).append(
-                _dom.stopMicroserviceBtn).append(
-                _dom.callMicroserviceBtn)))).append(
-          _dom.messageDiv);
-          */
           return $('<div class="container-fluid">').append(
           $('<div class="row form-group">').append(
             $('<div class="col-lg-12">').append(
@@ -1815,7 +1792,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         },
         trigger: 'hover'
       }),
-      newEmptyMicroserviceBtn: $('<button title="Create New" class="btn btn-default">Create New</button>').click(function () { //$('<span class="input-group-addon link">Create New</span>')
+      newEmptyMicroserviceBtn: $('<button title="Create New" class="btn btn-default">Create New</button>').click(function () {
         _statics.services.createEmptyMicroserviceConfiguration(config.mscEndpoint, function (msDefinition) {
           _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
             _statics.msManagement.createMicroservice(_dom, _state, config, msDefinitionOut);
@@ -1824,7 +1801,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-      editMicroserviceBtn: $('<button title="Edit" class="btn btn-default">Edit</button>').click(function () { //<span class="input-group-addon link">Edit</span>
+      editMicroserviceBtn: $('<button title="Edit" class="btn btn-default">Edit</button>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
@@ -1838,7 +1815,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-      deleteMicroserviceBtn: $('<button title="Delete" class="btn btn-default">Delete</button>').click(function () { //<span class="input-group-addon link">Delete</span>
+      deleteMicroserviceBtn: $('<button title="Delete" class="btn btn-default">Delete</button>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
@@ -1853,7 +1830,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           config.callConfigHandlerFn(msCallConfig, microserviceId, operationId);
         });
       }),
-      startMicroserviceBtn: $('<button title="Start" class="btn btn-default">Start</button>').click(function () { //<span class="input-group-addon link">Start</span>
+      startMicroserviceBtn: $('<button title="Start" class="btn btn-default">Start</button>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
@@ -1877,7 +1854,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           });
         }
       }),
-      stopMicroserviceBtn: $('<button title="Stop" class="btn btn-default">Stop</button>').click(function () { //<span class="input-group-addon link">Stop</span>
+      stopMicroserviceBtn: $('<button title="Stop" class="btn btn-default">Stop</button>').click(function () {
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
