@@ -1705,6 +1705,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
     },
     ui: {
       render: function (_dom) {
+        /*
         return $('<div class="container-fluid">').append(
           $('<div class="row form-group">').append(
             $('<div class="col-lg-12">').append(
@@ -1726,7 +1727,29 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
                 _dom.stopMicroserviceBtn).append(
                 _dom.callMicroserviceBtn)))).append(
           _dom.messageDiv);
-          
+          */
+          return $('<div class="container-fluid">').append(
+          $('<div class="row form-group">').append(
+            $('<div class="col-lg-12">').append(
+              $('<div class="input-group">').append(
+                '<span class="input-group-addon">Microservice ID:</span>').append(
+                _dom.microserviceIdTxt).append(
+                '<span class="input-group-addon">or</span>').append(
+                _dom.allMicroserviceSelect).append(
+                $('<div class="btn-group">').append(
+                  _dom.deleteMicroserviceBtn).append(
+                  _dom.editMicroserviceBtn).append(
+                  _dom.newEmptyMicroserviceBtn))))).append(
+          $('<div class="row form-group">').append(
+            $('<div class="col-lg-9">').append(
+              $('<div class="input-group">').append(
+                '<span class="input-group-addon">Operation Name:</span>').append(
+                _dom.allMicroserviceOperationsSelect).append(
+                _dom.checkStatusSpan).append(
+                _dom.startMicroserviceBtn).append(
+                _dom.stopMicroserviceBtn).append(
+                _dom.callMicroserviceBtn)))).append(
+          _dom.messageDiv);
       }
     }
   };
@@ -1790,7 +1813,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         },
         trigger: 'hover'
       }),
-      newEmptyMicroserviceBtn: $('<span class="input-group-addon link">Create New</span>').click(function () {
+      newEmptyMicroserviceBtn: $('<button title="Create New" class="btn btn-default">Create New</button>').click(function () { //$('<span class="input-group-addon link">Create New</span>')
         _statics.services.createEmptyMicroserviceConfiguration(config.mscEndpoint, function (msDefinition) {
           _statics.msManagement.showMicroserviceDefinitionUI(_dom, config, _state, msDefinition, function (msDefinitionOut) {
             _statics.msManagement.createMicroservice(_dom, _state, config, msDefinitionOut);
@@ -1799,7 +1822,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-      editMicroserviceBtn: $('<span class="input-group-addon link">Edit</span>').click(function () {
+      editMicroserviceBtn: $('<button title="Edit" class="btn btn-default">Edit</button>').click(function () { //<span class="input-group-addon link">Edit</span>
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
@@ -1813,7 +1836,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           Utils.showError(error, _dom.messageDiv);
         });
       }),
-      deleteMicroserviceBtn: $('<span class="input-group-addon link">Delete</span>').click(function () {
+      deleteMicroserviceBtn: $('<button title="Delete" class="btn btn-default">Delete</button>').click(function () { //<span class="input-group-addon link">Delete</span>
         var microserviceId = _dom.allMicroserviceSelect.val();
         if(microserviceId === '')
           microserviceId = _dom.microserviceIdTxt.val();
@@ -2026,7 +2049,7 @@ olive.modules.newOliveAdminUI = (function (Utils, newTable, newMicroserviceManag
     };
 
     var _dom = {
-      saveBtn: $('<button class="btn btn-default" type="button">Save</button>').click(function () {
+      saveBtn: $('<button class="btn btn-primary" type="button">Save</button>').click(function () {
         var config = _sub.inputTableModule.getContent();
         _statics.services.saveOliveConfig(_dom, config);
       }),
