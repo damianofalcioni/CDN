@@ -372,7 +372,6 @@ $('#managementBody').append(widgetRoot.append(widget.render()));
 widget.getConfig().configModule.refresh();
 widget.setContent(msCallConfig);
 */
-
 olive.modules.newWidgetView = (function (Utils) {
   var _statics = {
     ui: {
@@ -2183,14 +2182,14 @@ olive.modules.newOliveViewUI = (function (newMicroserviceCallViewUI, newWidgetVi
     view: {
       createWidget: function (config) {
         var widget = newWidgetView({
-          mappingFn: function (out, inp, conf) {
-              Object.assign(inp, out);
-              widget.setWidgetTitle(out.menuName);
+          mappingFn: function (configOutput, renderInput) {
+              Object.assign(renderInput, configOutput);
+              widget.setWidgetTitle(configOutput.menuName);
+              widget.setWidgetId(configOutput.menuName.replace(' ', '_'));
           },
-          newRenderModule: newMicroserviceCallViewUI,
-          newRenderModuleConfig: {
+          renderModule: newMicroserviceCallViewUI({
               mscEndpoint: config.mscEndpoint
-          }
+          })
         });
         return widget;
       }
