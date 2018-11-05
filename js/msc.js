@@ -7,6 +7,9 @@ if (typeof $.fn.popover != 'function') throw 'Bootstrap Required';
 var olive = {
   modules: {}
 };
+//FIXME: think about removing afterrender
+//FIXME: the render call have to be done only one time or there should be problems in the DOM
+
 //------------------------------------------------------------------------
 olive.utils = (function () {
   var _utils = {
@@ -338,36 +341,38 @@ olive.modules.newTable = (function () {
 Example:
 var widgetRoot = $('<div>');
 var widget = olive.modules.newWidgetView({
+  initialView: 'render',
   removeBtnClickFn: function () {
       widgetRoot.empty();
   },
-  mappingFn: function (out, inp, conf) {
-      Object.assign(inp, {
-          menuName: out.serviceName,
+  mappingFn: function (configOutput, renderInput) {
+      if(!configOutput.microserviceInputs) throw 'Widget not configured';
+      Object.assign(renderInput, {
           microserviceId: microserviceId,
           operationId: operationId,
-          microserviceInputJSON: JSON.stringify(out.microserviceInputs),
-          microserviceOutputAdaptAlg: out.microserviceOutputAdaptAlg,
+          microserviceInputJSON: JSON.stringify(configOutput.microserviceInputs),
+          microserviceOutputAdaptAlg: configOutput.microserviceOutputAdaptAlg,
       });
-      widget.setWidgetTitle(out.serviceName);
+      if(configOutput.serviceName)
+        widget.setWidgetTitle(configOutput.serviceName);
   },
-  newRenderModule: olive.modules.newMicroserviceCallViewUI,
-  newRenderModuleConfig: {
+  renderModule: olive.modules.newMicroserviceCallViewUI({
       mscEndpoint: mscEndpoint
-  },
-  newContentModule: olive.modules.newMicroserviceCallConfigUI,
-  newContentModuleConfig: {
+  }),
+  configModule: olive.modules.newMicroserviceCallConfigUI({
       mscEndpoint: mscEndpoint,
       microserviceId: microserviceId,
       operationId: operationId,
       forceStartWhenStopped: true,
       showServiceNameTxt: true
-  }
+  })
 });
+
 $('#managementBody').append(widgetRoot.append(widget.render()));
-widget.afterRender();
+widget.getConfig().configModule.refresh();
 widget.setContent(msCallConfig);
 */
+
 olive.modules.newWidgetView = (function (Utils) {
   var _statics = {
     ui: {
@@ -384,84 +389,91 @@ olive.modules.newWidgetView = (function (Utils) {
           _dom.panelCollapsable.append(
             $('<div class="panel-body">').append(
               _dom.messageDiv).append(
-              _dom.rootDiv)));
+              _dom.rootDiv.append(
+                _dom.renderModuleDom).append(
+                _dom.configModuleDom))));
       },
       setContent: function (_dom, _state, config, content) {
         _state.content = content;
-        _statics.widget.loadContent(_dom, config, _state);
+        _state.contentInitialized = true;
+        _statics.widget.refreshCurrentView(_dom, config, _state);
+      },
+      getContent: function (_state, config) {
+        return config.configModule?config.configModule.getContent():(_state.content);
       }
     },
     init: {
       initButtonsVisibility: function (_dom, config) {
-        _dom.refeshBtn.toggle(config.newRenderModule?config.refreshBtnVisible:false);
-        _dom.settingBtn.toggle(config.newContentModule?config.settingBtnVisible:false);
+        _dom.refeshBtn.toggle(config.refreshBtnVisible);
+        _dom.settingBtn.toggle(config.configModule?config.settingBtnVisible:false);
         _dom.deleteBtn.toggle(config.removeBtnClickFn?config.deleteBtnVisible:false);
+      },
+      initWidget: function (_dom, config, _state) {
+        _statics.init.initButtonsVisibility(_dom, config);
+        _dom.renderModuleDom.hide();
+        _dom.configModuleDom.hide();
+        
+        if(_state.currentView == 'config')
+          _statics.widget.showConfigView(_dom, config, _state);
+        else {
+          if(_state.contentInitialized)
+            _statics.widget.showRenderView(_dom, config, _state);
+        }
       }
     },
     widget: {
-      setTitle: function (_dom, title) {
-        _dom.panelRoot.attr('id', title.replace(' ', '_'));
-        _dom.panelTitle.html(title);
-      },
-      loadContent: function (_dom, config, _state) {
+      showRenderView: function (_dom, config, _state) {
+        _state.currentView = 'render';
+        _dom.renderModuleDom.show();
+        _dom.configModuleDom.hide();
+        
         try {
-          if(config.newRenderModule == null) throw 'newRenderModule not provided';
-          _dom.rootDiv.empty();
-          var newRenderModuleConfig = {};
-          var newRenderModuleContent = {};
-          if(_state.content)
-            config.mappingFn(_state.content, newRenderModuleContent, newRenderModuleConfig);
-          Object.assign(newRenderModuleConfig, config.newRenderModuleConfig);
-          var renderModule = config.newRenderModule(newRenderModuleConfig);
-          if(!renderModule.setContent) throw 'setContent function required for the newRenderModule';
-          if(!renderModule.render) throw 'render function required for the newRenderModule';
-          _dom.rootDiv.append(renderModule.render());
-          if(renderModule.afterRender)
-            renderModule.afterRender();
-          renderModule.setContent(newRenderModuleContent);
+          var renderModuleContent = {};
+          config.mappingFn(_state.content, renderModuleContent);
+          config.renderModule.setContent(renderModuleContent);
         } catch (error) {
           Utils.showError(error, _dom.messageDiv);
         }
       },
-      loadConfig: function (_dom, config, _state) {
+      showConfigView: function (_dom, config, _state) {
+        if(!config.configModule) return;
+        _state.currentView = 'config';
+        _dom.renderModuleDom.hide();
+        _dom.configModuleDom.show();
         try {
-          if(config.newContentModule == null) throw 'newContentModule not provided';
-          _dom.rootDiv.empty();
-          var contentModule = config.newContentModule(config.newContentModuleConfig);
-          if(!contentModule.setContent) throw 'setContent function required for the newContentModule';
-          if(!contentModule.getContent) throw 'getContent function required for the newContentModule';
-          if(!contentModule.render) throw 'render function required for the newContentModule';
-          _dom.rootDiv.append(contentModule.render());
-          if(contentModule.afterRender)
-            contentModule.afterRender();
-          if(_state.content)
-            contentModule.setContent(_state.content);
-          _dom.rootDiv.append(
-            '<br><br>').append(
-            $('<button title="Save" class="btn btn-primary">Save</button>').click(function () {
-            _state.content = contentModule.getContent();
-            _statics.widget.loadContent(_dom, config, _state);
-          }));
+          config.configModule.setContent(_state.content);
         } catch (error) {
           Utils.showError(error, _dom.messageDiv);
         }
+      },
+      refreshCurrentView: function (_dom, config, _state) {
+        if(_state.currentView == 'config')
+          _statics.widget.showConfigView(_dom, config, _state);
+        else
+          _statics.widget.showRenderView(_dom, config, _state);
       }
     }
   };
   
   return function (config={}) {
+    config.initialView = config.initialView || 'render'; //render or config
     config.removeBtnClickFn = config.removeBtnClickFn || null;
     config.refreshBtnVisible = config.refreshBtnVisible!=null?config.refreshBtnVisible:true;
     config.settingBtnVisible = config.settingBtnVisible!=null?config.settingBtnVisible:true;
     config.deleteBtnVisible = config.deleteBtnVisible!=null?config.deleteBtnVisible:true;
-    config.mappingFn = config.mappingFn || function (out, inp, conf) { Object.assign(inp, out); };
-    config.newRenderModule = config.newRenderModule || null;
-    config.newRenderModuleConfig = config.newRenderModuleConfig || {};
-    config.newContentModule = config.newContentModule || null;
-    config.newContentModuleConfig = config.newContentModuleConfig || {};
+    config.mappingFn = config.mappingFn || function (configOutput, renderInput) { Object.assign(renderInput, configOutput); };
+    if(!config.renderModule) throw 'renderModule not provided';
+    config.configModule = config.configModule || null;
+    if(!config.renderModule.render) throw 'render function required for the renderModule';
+    if(!config.renderModule.setContent) throw 'setContent function required for the renderModule';
+    if(config.configModule && !config.configModule.render) throw 'render function required for the configModule';
+    if(config.configModule && !config.configModule.setContent) throw 'setContent function required for the configModule';
+    if(config.configModule && !config.configModule.getContent) throw 'getContent function required for the configModule';
     
     var _state = {
-      content: null
+      content: {},
+      contentInitialized: false,
+      currentView: config.initialView
     };
     
     var _dom = {
@@ -471,46 +483,197 @@ olive.modules.newWidgetView = (function (Utils) {
       }),
       panelRoot: $('<div class="panel panel-default">'),
       panelTitle: $('<span>'),
-      panelCollapsable: $('<div class="panel-collapse">'),
+      panelCollapsable: $('<div class="panel-collapse">').on('shown.bs.collapse', function () {
+        _statics.widget.refreshCurrentView(_dom, config, _state);
+      }),
       messageDiv: $('<div>'),
-      refeshBtn: $('<button title="Refresh" class="btn btn-default btn-xs">Refresh</button>').click(function (e) { //btn-sm <span class="glyphicon glyphicon-refresh"></span>
+      refeshBtn: $('<button title="Refresh" class="btn btn-default btn-xs">Refresh</button>').click(function (e) {
         e.stopPropagation();
-        _statics.widget.loadContent(_dom, config, _state);
+        _statics.widget.showRenderView(_dom, config, _state);
       }),
-      settingBtn: $('<button title="Configure" class="btn btn-default btn-xs">Configure</button>').click(function (e) {//btn-sm <span class="glyphicon glyphicon-wrench"></span>
+      settingBtn: $('<button title="Configure" class="btn btn-default btn-xs">Configure</button>').click(function (e) {
         e.stopPropagation();
-        _statics.widget.loadConfig(_dom, config, _state);
+        _statics.widget.showConfigView(_dom, config, _state);
       }),
-      deleteBtn: $('<button title="Remove" class="btn btn-default btn-xs">Remove</button>').click(function(e) { //btn-sm <span class="glyphicon glyphicon-trash"></span>
+      deleteBtn: $('<button title="Remove" class="btn btn-default btn-xs">Remove</button>').click(function(e) {
         e.stopPropagation();
-        if(config.removeBtnClickFn)
-          config.removeBtnClickFn();
-      })
+        if(config.removeBtnClickFn) config.removeBtnClickFn();
+      }),
+      renderModuleDom: $('<div>').append(config.renderModule.render()),
+      configModuleDom: $('<div>').append(config.configModule?config.configModule.render().append(
+        '<br><br>').append(
+        $('<button title="Save" class="btn btn-primary">Save</button>').click(function () {
+          _state.content = config.configModule.getContent();
+          _statics.widget.showRenderView(_dom, config, _state);
+        })):null)
     };
     
-    _statics.init.initButtonsVisibility(_dom, config);
+    _statics.init.initWidget(_dom, config, _state);
     
     return {
       render: function () {
         return _statics.ui.render(_dom);
       },
-      afterRender: function () {
-        if(config.newContentModule != null) 
-          _statics.widget.loadConfig(_dom, config, _state);
-      },
-      setContent: function (content={}) {
+      setContent: function (content = {}) {
         _statics.ui.setContent(_dom, _state, config, content);
       },
-      setWidgetTitle: function (title) {
-        _statics.widget.setTitle(_dom, title);
+      getContent: function () {
+        return _statics.ui.getContent(_state, config);
+      },
+      setWidgetTitle: function (title = '') {
+        _dom.panelTitle.html(title);
+      },
+      setWidgetId: function (id = '') {
+        _dom.panelRoot.attr('id', id);
+      },
+      getConfig: function () {
+        return config;
       }
     };
   };
 }(olive.utils));
 
-//------------------------------------------------------------------------
-olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
 
+//------------------------------------------------------------------------
+olive.modules.newCodeEditor = (function (CodeMirror) {
+  return function (config={}) {
+    config.mode = config.mode || 'javascript';
+    config.tabSize = config.tabSize || 2;
+    config.lineNumbers = config.lineNumbers!=null?config.lineNumbers:true;
+    config.lineWrapping = config.lineWrapping!=null?config.lineWrapping:true;
+    
+    var _dom = {
+      rootDiv: $('<div>'),
+    };
+    var _state = {
+      editor: CodeMirror(_dom.rootDiv[0], config)
+    };
+    return {
+      render: function () {
+        return _dom.rootDiv;
+      },
+      refresh: function () {
+        _state.editor.refresh();
+      },
+      setContent: function (content='') {
+        _state.editor.setValue(content);
+        _state.editor.refresh();
+      },
+      getContent: function () {
+        return _state.editor.getValue();
+      }
+    };
+  };
+}(CodeMirror));
+
+//------------------------------------------------------------------------
+olive.modules.newMicroserviceCallConfigUI = (function (Utils, newCodeEditor) {
+  
+  var newMSInputTable = (function (Utils) {
+    var _statics = {
+      services: {
+        getMicroserviceIOInfo: function (restEndpoint, microserviceId, operationId, successCallback, failureCallback) {
+          Utils.callService(restEndpoint + 'msc/getMicroserviceIOInfo', 'microserviceId=' + microserviceId + '&operationId=' + operationId, null, successCallback, failureCallback);
+        }
+      },
+      init: {
+        initInputTable: function (_dom, _state, config) {
+          _statics.services.getMicroserviceIOInfo(config.mscEndpoint, config.microserviceId, config.operationId, function (msIOInfo) {
+            _state.loadCompleted = false;
+            _dom.tableTbody.empty();
+            Object.keys(msIOInfo.requiredInputTemplate).forEach(function (inputId) {
+              var inputInfos = msIOInfo.requiredInputTemplate[inputId];
+              _dom.inputTxts[inputId] = $('<textarea style="resize:vertical;" rows="1" class="form-control" placeholder="' + inputInfos.workingExample + '">' + inputInfos.workingExample + '</textarea>');
+
+              _dom.tableTbody.append(
+                $('<tr>').append(
+                  $('<td>').append(
+                    $('<div class="input-group">').append(
+                      $('<span class="input-group-addon">' + inputId + '</span>').popover({
+                        placement: 'auto left',
+                        container: 'body',
+                        html: true,
+                        title: inputId + ' details',
+                        content: inputInfos.description,
+                        trigger: 'hover click'
+                      })).append(
+                      _dom.inputTxts[inputId]))));
+            });
+            _state.loadCompleted = true;
+            _statics.ui.setContent(_dom, _state, _state.content);
+            config.outputDescriptionHandlerFn(msIOInfo.outputDescription);
+          }, function (error) {
+            Utils.showError(error, _dom.messageDiv);
+          });
+        }
+      },
+      ui: {
+        newDom: function () {
+          return {
+            inputTxts: {},
+            tableTbody: $('<tbody>'),
+            messageDiv: $('<div>')
+          };
+        },
+        render: function (_dom) {
+          return $('<div>').append(
+            $('<table class="table table-condensed table-hover">').append(
+              _dom.tableTbody)).append(
+            _dom.messageDiv);
+        },
+        setContent: function (_dom, _state, content) {
+          if(_state.loadCompleted) {
+            Object.keys(content).forEach(function (inputId) {
+              if(_dom.inputTxts[inputId] == null) throw 'Impossible to find the input ' + inputId;
+              _dom.inputTxts[inputId].val(content[inputId].value?content[inputId].value:'');
+            });
+          }
+        },
+        getContent: function (_dom, _state) {
+          if(_state.loadCompleted) {
+            var ret = {};
+            Object.keys(_dom.inputTxts).forEach(function (inputId) {
+              ret[inputId] = {
+                value: _dom.inputTxts[inputId].val()
+              };
+            });
+            return ret;
+          } else {
+            return _state.content;
+          }
+        }
+      }
+    };
+    
+    return function (config={}) {
+      config.mscEndpoint = config.mscEndpoint || '';
+      config.microserviceId = config.microserviceId || '';
+      config.operationId = config.operationId || '';
+      config.outputDescriptionHandlerFn = config.outputDescriptionHandlerFn || function (desc) {};
+      
+      var _state = {
+        content: {},
+        loadCompleted: false
+      };
+      var _dom = _statics.ui.newDom();
+      
+      _statics.init.initInputTable(_dom, _state, config);
+      
+      return {
+        render: function () {
+          return _statics.ui.render(_dom);
+        },
+        getContent: function () {
+           return _statics.ui.getContent(_dom, _state);
+        },
+        setContent: function (content={}) {
+          _state.content = content;
+          _statics.ui.setContent(_dom, _state, content);
+        }
+      };
+    };
+  }(Utils));
+  
   var _statics = {
     services: {
       callMicroserviceForced: function (restEndpoint, microserviceId, operationId, inputs, successCallback, failureCallback) {
@@ -518,76 +681,54 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
       },
       callMicroservice: function (restEndpoint, microserviceId, operationId, inputs, successCallback, failureCallback) {
         Utils.callService(restEndpoint + 'msc/callMicroservice', 'microserviceId=' + microserviceId + '&operationId=' + operationId, JSON.stringify(inputs), successCallback, failureCallback);
-      },
-      getMicroserviceIOInfo: function (restEndpoint, microserviceId, operationId, successCallback, failureCallback) {
-        Utils.callService(restEndpoint + 'msc/getMicroserviceIOInfo', 'microserviceId=' + microserviceId + '&operationId=' + operationId, null, successCallback, failureCallback);
       }
     },
     view: {
-      showMSResult: function (output, adaptationAlg, originalResultTxt, adaptedResultDiv, messagesDiv) {
-          if (originalResultTxt && originalResultTxt.val)
-            originalResultTxt.val(JSON.stringify(output, null, 4));
-          if (adaptationAlg.indexOf('return ') === -1) {
-            adaptationAlg = 'return $("<pre>").append($("<code>").append(JSON.stringify(output, null, 2)));';
-          }
-          try {
-            var algF = new Function('output', adaptationAlg + '\n//# sourceURL=microservice_custom_alg.js');
-            var domDemoRes = algF(output);
-            if(adaptedResultDiv)
-              adaptedResultDiv.empty().append(domDemoRes);
-          } catch (e) {
-            Utils.showError(e, messagesDiv);
-          }
+      showMSResult: function (output, _sub, _dom) {
+        var adaptationAlg = _sub.codeEditor.getContent();
+        
+        _dom.resultTxt.val(JSON.stringify(output, null, 4));
+        if (adaptationAlg.indexOf('return ') === -1) {
+          adaptationAlg = 'return $("<pre>").append($("<code>").append(JSON.stringify(output, null, 2)));';
         }
+        try {
+          var algF = new Function('output', adaptationAlg + '\n//# sourceURL=microservice_custom_alg.js');
+          var domDemoRes = algF(output);
+          _dom.resultDemoDiv.empty().append(domDemoRes);
+        } catch (e) {
+          Utils.showError(e, _dom.rootNode);
+        }
+      },
+      callMicroservice: function (_dom, _sub, config) {
+        var requiredInputs = _sub.inputTable.getContent();
+        _dom.callInputJsonPre.html(JSON.stringify(requiredInputs, null, 4));
+        if (config.forceStartWhenStopped) {
+          _statics.services.callMicroserviceForced(config.mscEndpoint, config.microserviceId, config.operationId, requiredInputs, function (output) {
+            _statics.view.showMSResult(output, _sub, _dom);
+          }, function (error) {
+            Utils.showError(error, _dom.rootNode);
+          });
+        } else {
+          _statics.services.callMicroservice(config.mscEndpoint, config.microserviceId, config.operationId, requiredInputs, function (output) {
+            _statics.view.showMSResult(output, _sub, _dom);
+          }, function (error) {
+            Utils.showError(error, _dom.rootNode);
+          });
+        }
+      }
     },
     init: {
-      initACEEditor: function (_dom, _state) {
-        _state.aceEditor = ace.edit(_dom.microserviceOutputAdaptAlgDiv[0], {
-            mode: "ace/mode/javascript",
-            autoScrollEditorIntoView: true,
-            minLines: 5
-          });
-      },
-      initMsInputsDom: function (_dom, _state, mscEndpoint, microserviceId, operationId, afterInitFn = function(){}) {
-        _statics.services.getMicroserviceIOInfo(mscEndpoint, microserviceId, operationId, function (msIOInfo) {
-          _dom.tableTbody.empty();
-          _state.requiredInputs = {};
-          Object.keys(msIOInfo.requiredInputTemplate).forEach(function (inputId) {
-            _state.requiredInputs[inputId] = {
-              value: ''
-            };
-            var inputInfos = msIOInfo.requiredInputTemplate[inputId];
-            _dom.inputTxts[inputId] = $('<textarea style="resize:vertical;" rows="1" class="form-control" placeholder="' + inputInfos.workingExample + '">' + inputInfos.workingExample + '</textarea>');
-            _dom.resultDescriptionSpan.text(msIOInfo.outputDescription);
-            _dom.callEndpointSpan.text(mscEndpoint + '?microserviceId=' + microserviceId + '&operationId=' + operationId);
-            _dom.callMicroserviceIdSpan.text(microserviceId);
-            _dom.callMicroserviceOperationIdSpan.text(operationId);
-            _dom.callInputJsonPre.html(JSON.stringify(_state.requiredInputs, null, 4));
-
-            _dom.tableTbody.append(
-              $('<tr>').append(
-                $('<td>').append(
-                  $('<div class="input-group">').append(
-                    $('<span class="input-group-addon">' + inputId + '</span>').popover({
-                      placement: 'auto left',
-                      container: _dom.rootNode,
-                      html: true,
-                      title: inputId + ' details',
-                      content: inputInfos.description,
-                      trigger: 'hover click'
-                    })).append(
-                    _dom.inputTxts[inputId]))));
-          });
-          afterInitFn();
-        }, function (error) {
-          Utils.showError(error, _dom.messageDiv);
-        });
+      initEndpointText: function (_dom, config) {
+        _dom.callEndpointSpan.text(config.mscEndpoint + '?microserviceId=' + config.microserviceId + '&operationId=' + config.operationId);
+        _dom.callMicroserviceIdSpan.text(config.microserviceId);
+        _dom.callMicroserviceOperationIdSpan.text(config.operationId);
+        _dom.callInputJsonPre.html('');
       }
     },
     ui: {
-      render: function (_dom, _state) {
-        return _dom.rootNode.append(_dom.messageDiv).append(
-          $('<div>').toggle(_state.showServiceNameTxt).append(
+      render: function (_dom, _sub, config) {
+        return _dom.rootNode.empty().append(_dom.messageDiv).append(
+          $('<div>').toggle(config.showServiceNameTxt).append(
             $('<div class="input-group">').append(
               '<span class="input-group-addon">Service Name: </span>').append(
               _dom.serviceNameTxt))).append('<br>').append(
@@ -595,11 +736,10 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
             $('<div class="row">').append(
               $('<div class="col-md-6">').append(
                 '<b>Microservice Required Inputs</b>').append(
-                $('<table class="table table-condensed table-hover">').append(
-                  _dom.tableTbody))).append(
+                _sub.inputTable.render())).append(
               $('<div class="col-md-6">').append(
                 '<b>Custom Rendering Algorithm</b>').append(
-                _dom.microserviceOutputAdaptAlgDiv)))).append(
+                _sub.codeEditor.render())))).append(
           _dom.testCallBtn).append('<br><br>').append(
           $('<div class="row">').append(
             $('<div class="col-md-6">').append(
@@ -623,60 +763,32 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
                 $('<div class="panel-body">').append(
                   _dom.resultDemoDiv)))));
       },
-      afterRender: function (_dom, _state) {
-        _dom.microserviceOutputAdaptAlgDiv.width(_dom.microserviceOutputAdaptAlgDiv.parent().width());
-        _dom.microserviceOutputAdaptAlgDiv.height(250);
-        _statics.init.initACEEditor(_dom, _state);
-        _state.aceEditor.resize();
-      },
-      getContent: function (_dom, _state) {
-        var microserviceInputs = (function () {
-          Object.keys(_state.requiredInputs).forEach(function (inputId) {
-            _state.requiredInputs[inputId].value = _dom.inputTxts[inputId].val();
-          });
-          return _state.requiredInputs;
-        }());
+      getContent: function (_dom, _sub, _state) {
         return {
-          microserviceInputs: microserviceInputs,
+          microserviceInputs: _sub.inputTable.getContent(),
           serviceName: _dom.serviceNameTxt.val(),
-          microserviceOutputAdaptAlg: _state.aceEditor.getValue()
+          microserviceOutputAdaptAlg: _sub.codeEditor.getContent()
         };
       },
-      setContent: function (_dom, _state, config, content) {
+      setContent: function (_dom, _sub, content) {
         _dom.serviceNameTxt.val(content.serviceName || '');
-        
-        _statics.init.initMsInputsDom(_dom, _state, config.mscEndpoint, config.microserviceId, config.operationId, function () {
-          Object.keys(_dom.inputTxts).forEach(function (inputId) {
-            _dom.inputTxts[inputId].val(content.microserviceInputs && content.microserviceInputs[inputId] && content.microserviceInputs[inputId].value?content.microserviceInputs[inputId].value:'');
-          });
-        });
-        
-        if(_state.aceEditor)
-          _state.aceEditor.setValue(content.microserviceOutputAdaptAlg || '/*\n  Javascript algoritm that "return" a DOM object.\n  The algorithm can access the microservice output content\n  using the variable "output"\n*/');
-        else
-          throw 'aceEditor not initialized';
+        _sub.inputTable.setContent(content.microserviceInputs || {});
+        _sub.codeEditor.setContent(content.microserviceOutputAdaptAlg || '/*\n  Javascript algoritm that "return" a DOM object.\n  The algorithm can access the microservice output content\n  using the variable "output"\n*/');
       }
     }
   };
 
   return function (config={}) {
-    var mscEndpoint = config.mscEndpoint || '';
-    var microserviceId = config.microserviceId || '';
-    var operationId = config.operationId || '';
-    var forceStartWhenStopped = config.forceStartWhenStopped!=null?config.forceStartWhenStopped:true;
-    var showServiceNameTxt = config.showServiceNameTxt!=null?config.showServiceNameTxt:true;
-    
-    var _state = {
-      requiredInputs: {},
-      aceEditor: null,
-      showServiceNameTxt: showServiceNameTxt
-    };
+    config.mscEndpoint = config.mscEndpoint || '';
+    config.microserviceId = config.microserviceId || '';
+    config.operationId = config.operationId || '';
+    config.forceStartWhenStopped = config.forceStartWhenStopped!=null?config.forceStartWhenStopped:true;
+    config.showServiceNameTxt = config.showServiceNameTxt!=null?config.showServiceNameTxt:true;
     
     var _dom = {
       rootNode: $('<div>'),
       messageDiv: $('<div>'),
       serviceNameTxt: $('<input type="text" class="form-control" placeholder="Unique Name">'),
-      inputTxts: {},
       resultTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control" placeholder="Call results"></textarea>'),
       resultDescriptionSpan: $('<span>'),
       resultDemoDiv: $('<div>'),
@@ -684,47 +796,46 @@ olive.modules.newMicroserviceCallConfigUI = (function (Utils, ace) {
       callMicroserviceOperationIdSpan: $('<span>'),
       callEndpointSpan: $('<span>'),
       callInputJsonPre: $('<pre>'),
-      tableTbody: $('<tbody>'),
-      testCallBtn: $('<button class="btn btn-primary" type="button">Test a Call</button>').click(function () {
-        Object.keys(_state.requiredInputs).forEach(function (inputId) {
-          _state.requiredInputs[inputId].value = _dom.inputTxts[inputId].val();
-        });
-        _dom.callInputJsonPre.html(JSON.stringify(_state.requiredInputs, null, 4));
-        if (forceStartWhenStopped) {
-          _statics.services.callMicroserviceForced(mscEndpoint, microserviceId, operationId, _state.requiredInputs, function (output) {
-            _statics.view.showMSResult(output, _state.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
-          }, function (error) {
-            Utils.showError(error, _dom.rootNode);
-          });
-        } else {
-          _statics.services.callMicroservice(mscEndpoint, microserviceId, operationId, _state.requiredInputs, function (output) {
-            _statics.view.showMSResult(output, _state.aceEditor.getValue(), _dom.resultTxt, _dom.resultDemoDiv, _dom.rootNode);
-          }, function (error) {
-            Utils.showError(error, _dom.rootNode);
-          });
-        }
-      }),
-      microserviceOutputAdaptAlgDiv: $('<div>')
+      testCallBtn: null
     };
-
-    _statics.init.initMsInputsDom(_dom, _state, mscEndpoint, microserviceId, operationId);
+        
+    var _sub = {
+      codeEditor: newCodeEditor({}),
+      inputTable: newMSInputTable({
+        mscEndpoint: config.mscEndpoint,
+        microserviceId: config.microserviceId,
+        operationId: config.operationId,
+        outputDescriptionHandlerFn: function (desc) {
+          _dom.resultDescriptionSpan.text(desc);
+        }
+      })
+    };
+    
+    _dom.testCallBtn = $('<button class="btn btn-primary" type="button">Test a Call</button>').click(function () {
+      _statics.view.callMicroservice(_dom, _sub, config);
+    });
+    
+    _statics.init.initEndpointText(_dom, config);
 
     return {
       getContent: function () {
-        return _statics.ui.getContent(_dom, _state);
+        return _statics.ui.getContent(_dom, _sub);
       },
       setContent: function (content={}) {
-        _statics.ui.setContent(_dom, _state, config, content);
+        _statics.ui.setContent(_dom, _sub, content);
       },
       render: function () {
-        return _statics.ui.render(_dom, _state);
+        return _statics.ui.render(_dom, _sub, config);
       },
       afterRender: function () {
-        _statics.ui.afterRender(_dom, _state);
+        _sub.codeEditor.refresh();
+      },
+      refresh: function () {
+        _sub.codeEditor.refresh();
       }
     };
   }
-}(olive.utils, ace));
+}(olive.utils, olive.modules.newCodeEditor));
 
 //------------------------------------------------------------------------
 olive.modules.newMicroserviceCallViewUI = (function (Utils) {
@@ -752,7 +863,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
           try {
             var algF = new Function('output', alg + '\n//# sourceURL=microservice_custom_alg.js');
             var domOut = algF(data);
-            _dom.outputDiv.append(domOut);
+            _dom.outputDiv.empty().append(domOut);
           } catch (e) {
             Utils.showError(e, _dom.messageDiv);
           }
@@ -777,7 +888,6 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
           _dom.outputDiv);
       },
       setContent: function (_dom, config, content) {
-        content.menuName = content.menuName || '';
         content.microserviceId = content.microserviceId || '';
         content.operationId = content.operationId || '';
         content.microserviceInputJSON = content.microserviceInputJSON || '{}';
@@ -805,7 +915,7 @@ olive.modules.newMicroserviceCallViewUI = (function (Utils) {
 }(olive.utils));
 
 //------------------------------------------------------------------------
-olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
+olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable, newCodeEditor) {
   
   //------------------------------------------------------------------------
   var _newMSInputsModule = (function (Utils, newTable) {
@@ -1062,7 +1172,7 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
     (Utils, newTable));
 
   //------------------------------------------------------------------------
-  var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule) {
+  var _newMSOperationModule = (function (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule, newCodeEditor) {
     var _statics = {
       init: {
         initConnectorSelect: function (_dom, config) {
@@ -1080,7 +1190,10 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
             panelHeader: $('<div class="panel-heading link">').click(function () {
               _dom.panelCollapsable.collapse('toggle');
             }),
-            panelCollapsable: $('<div class="panel-collapse collapse">'),
+            panelCollapsable: $('<div class="panel-collapse collapse">').on('shown.bs.collapse', function () {
+              _sub.outputAdaptationAlgorithmCodeEditor.refresh();
+              _sub.statusCheckAlgorithmCodeEditor.refresh();
+            }),
             panelTitleLabel: $('<span>'),
             removeRowBtn: $('<button class="btn btn-default btn-xs" type="button">Delete</button>').click(config.removeBtnHandlerFn),
             asyncInputsDiv: $('<div class="row form-group">'),
@@ -1099,9 +1212,7 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
             }),
             connectorDescDiv: $('<pre>'),
             connectorOutputDescTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control" readonly>'),
-            outputDescriptionTxt: $('<textarea style="resize:vertical;" rows="5" class="form-control">'),
-            outputAdaptationAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">'),
-            statusCheckAlgorithmTxt: $('<textarea style="resize:vertical;" rows="10" class="form-control">')
+            outputDescriptionTxt: $('<textarea style="resize:vertical;" rows="5" class="form-control">')
           };
           return _dom;
         },
@@ -1162,12 +1273,14 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
                   $('<div class="col-lg-12">').append(
                     $('<div class="input-group">').append(
                       '<span class="input-group-addon">Output Adaptation Algorithm</span>').append(
-                      _dom.outputAdaptationAlgorithmTxt)))).append(
+                      _sub.outputAdaptationAlgorithmCodeEditor.render())
+                      ))).append(
                 $('<div class="row form-group">').append(
                   $('<div class="col-lg-12">').append(
                     $('<div class="input-group">').append(
                       '<span class="input-group-addon">Status Check Algorithm</span>').append(
-                      _dom.statusCheckAlgorithmTxt))))));
+                      _sub.statusCheckAlgorithmCodeEditor.render())
+                    )))));
         },
         getContent: function (_dom, _sub, config) {
           var ret = {
@@ -1179,8 +1292,8 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
             configuration: {
               connectorId: _dom.connectorIdSelect.val(),
               outputDescription: _dom.outputDescriptionTxt.val(),
-              outputAdaptationAlgorithm: _dom.outputAdaptationAlgorithmTxt.val(),
-              statusCheckAlgorithm: _dom.statusCheckAlgorithmTxt.val(),
+              outputAdaptationAlgorithm: _sub.outputAdaptationAlgorithmCodeEditor.getContent(),
+              statusCheckAlgorithm: _sub.statusCheckAlgorithmCodeEditor.getContent(),
               configStart: _sub.startConfigModule.getContent(),
               configCall: _sub.callConfigModule.getContent(),
               inputs: _sub.msInputsModule.getContent()
@@ -1206,9 +1319,9 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
           var actualConnectorId = _state.content.configuration ? _state.content.configuration.connectorId : '';
           var configuration = _state.content.configuration || {};
           _dom.outputDescriptionTxt.val(configuration.outputDescription && actualConnectorId === selectedConnectorId ? configuration.outputDescription : '');
-          _dom.outputAdaptationAlgorithmTxt.val(configuration.outputAdaptationAlgorithm && actualConnectorId === selectedConnectorId ? configuration.outputAdaptationAlgorithm : '');
-          _dom.statusCheckAlgorithmTxt.val(configuration.statusCheckAlgorithm && actualConnectorId === selectedConnectorId ? configuration.statusCheckAlgorithm : '');
-
+          _sub.outputAdaptationAlgorithmCodeEditor.setContent(configuration.outputAdaptationAlgorithm && actualConnectorId === selectedConnectorId ? configuration.outputAdaptationAlgorithm : '');
+          _sub.statusCheckAlgorithmCodeEditor.setContent(configuration.statusCheckAlgorithm && actualConnectorId === selectedConnectorId ? configuration.statusCheckAlgorithm : '');
+          
           _sub.startConfigModule.setContent({
             inputTemplates: config.connectors[selectedConnectorId] ? config.connectors[selectedConnectorId].startConfigurationTemplate : {},
             inputValues: configuration.configStart && selectedConnectorId === selectedConnectorId ? configuration.configStart : {}
@@ -1248,7 +1361,9 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
           mscEndpoint: config.mscEndpoint
         }),
         msInputsModule: _newMSInputsModule(),
-        msAsyncInputsModule: new _MSAsyncInputsModule()
+        msAsyncInputsModule: new _MSAsyncInputsModule(),
+        outputAdaptationAlgorithmCodeEditor: newCodeEditor({}),
+        statusCheckAlgorithmCodeEditor: newCodeEditor({})
       };
       var _dom = _statics.ui.newDom(_sub, _state, config);
 
@@ -1257,6 +1372,9 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
       return {
         render: function () {
           return _statics.ui.render(_dom, _sub);
+        },
+        afterRender: function () {
+          _sub.outputAdaptationAlgorithmCodeEditor.refresh();
         },
         setContent: function (content = {}) {
           _statics.ui.setContent(_dom, _sub, _state, content);
@@ -1276,7 +1394,7 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
       };
     };
   }
-    (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule));
+    (Utils, _newConnectorConfiguration, _newMSInputsModule, _MSAsyncInputsModule, newCodeEditor));
 
   //------------------------------------------------------------------------
   var _newMSDetailsModule = (function (Utils) {
@@ -1436,6 +1554,12 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
               _dom.addOperationBtn))).append(
           _dom.operationsDiv);
       },
+      afterRender: function (_sub) {
+        _sub.msOperationModuleList.forEach(function (msOperationModule) {
+          if(msOperationModule.afterRender)
+            msOperationModule.afterRender();
+        });
+      },
       getContent: function (_dom, _sub, _state) {
         var ops = {};
         var defaultOpId = _sub.msOperationModuleList[0] ? _sub.msOperationModuleList[0].getId() : '';
@@ -1499,6 +1623,9 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
       render: function () {
         return _statics.ui.render(_dom, _sub);
       },
+      afterRender: function () {
+        _statics.ui.afterRender(_sub);
+      },
       getContent: function () {
         return _statics.ui.getContent(_dom, _sub, _state);
       },
@@ -1507,7 +1634,7 @@ olive.modules.newMicroserviceDefinitionUI = (function (Utils, newTable) {
       }
     };
   };
-}(olive.utils, olive.modules.newTable));
+}(olive.utils, olive.modules.newTable, olive.modules.newCodeEditor));
 
 //------------------------------------------------------------------------
 olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, newMicroserviceCallConfigUI, newMicroserviceDefinitionUI) {
@@ -1653,8 +1780,7 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
         if(microserviceId != '') {
           _statics.services.deleteMicroservice(config.mscEndpoint, microserviceId, function () {
             _statics.init.initMicroserviceSelect(_dom, _state, config);
-            _dom.microserviceIdTxt.val(microserviceId).trigger('change');
-            Utils.showSuccess('Microservice deleted', _dom.messageDiv);
+            Utils.showSuccess('Microservice '+microserviceId+' deleted', _dom.messageDiv);
           }, function (error) {
             Utils.showError(error, _dom.messageDiv);
           });
@@ -1674,7 +1800,10 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
             return true;
           }, function () {
             okHandlerFn(msModule.getContent());
-          }, function () {});
+          }, function () {
+            if(msModule.afterRender)
+              msModule.afterRender();
+          });
         }catch(e) {
           Utils.showError(e, _dom.messageDiv);
         }
@@ -1695,7 +1824,6 @@ olive.modules.newMicroserviceManagementInlineUI = (function (Utils, newTable, ne
           }, function () {
             okHandlerFn(microserviceCallConfigUI.getContent(), microserviceId, operationId);
           }, function () {
-            microserviceCallConfigUI.afterRender();
             microserviceCallConfigUI.setContent(content);
           });
         }catch(e) {
